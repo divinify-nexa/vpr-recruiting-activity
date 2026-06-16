@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>VPR Recruiting Activity</title>
+<style>
+  :root {
+    --navy: #0C1222;
+    --panel: #141B2E;
+    --row: #182037;
+    --line: #232C42;
+    --text: #E8ECF5;
+    --muted: #8A93A8;
+    --yellow: #FFDE17;
+    --blue: #4A6CF7;
+    --green: #34D399;
+    --amber: #FBBF24;
+    --red: #F87171;
+    --faint: #5C6680;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.45;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 64px; }
+
+  /* Header */
+  header.bar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 26px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 0 0 rgba(52,211,153,.55); animation: pulse 2.2s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(52,211,153,.5); }
+    70%  { box-shadow: 0 0 0 9px rgba(52,211,153,0); }
+    100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+  .brand h1 {
+    font-size: 17px; font-weight: 700; margin: 0; letter-spacing: .2px;
+  }
+  .brand .sub { color: var(--muted); font-size: 12.5px; }
+  .right { display: flex; align-items: center; gap: 14px; }
+  .updated { color: var(--faint); font-size: 12px; }
+  button.refresh {
+    background: var(--panel); color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 13px; font-size: 13px; cursor: pointer;
+    font-family: inherit; transition: border-color .15s, background .15s;
+  }
+  button.refresh:hover { border-color: var(--blue); }
+  button.refresh:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  button.refresh:disabled { opacity: .55; cursor: default; }
+
+  /* KPIs */
+  .kpis {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 30px;
+  }
+  .kpi {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px 18px 16px;
+  }
+  .kpi .num {
+    font-size: 34px; font-weight: 800; letter-spacing: -.5px;
+    font-variant-numeric: tabular-nums; line-height: 1.05;
+  }
+  .kpi.accent .num { color: var(--yellow); }
+  .kpi .lab { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+  .kpi .note { color: var(--faint); font-size: 11.5px; margin-top: 2px; }
+
+  /* Panels */
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; overflow: hidden;
+  }
+  .panel > h2 {
+    font-size: 13px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+    color: var(--muted); margin: 0; padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--line); display: flex; justify-content: space-between;
+  }
+  .panel > h2 .count { color: var(--text); }
+  .list { display: flex; flex-direction: column; }
+  .item {
+    padding: 13px 18px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .item:last-child { border-bottom: none; }
+  .item .who { font-weight: 600; font-size: 14.5px; }
+  .item .meta { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .item .when { color: var(--faint); font-size: 12px; white-space: nowrap; text-align: right; }
+  .item .talk { font-variant-numeric: tabular-nums; }
+
+  .pill {
+    display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .2px;
+    padding: 2px 8px; border-radius: 999px; margin-right: 8px; vertical-align: 1px;
+  }
+  .pill.answered { background: rgba(52,211,153,.13); color: var(--green); }
+  .pill.missed   { background: rgba(251,191,36,.13); color: var(--amber); }
+  .pill.failed   { background: rgba(248,113,113,.13); color: var(--red); }
+  .pill.other    { background: rgba(138,147,168,.14); color: var(--muted); }
+
+  .empty, .error { padding: 26px 18px; color: var(--muted); font-size: 13.5px; }
+  .error { color: var(--amber); }
+  .loading { padding: 26px 18px; color: var(--faint); font-size: 13.5px; }
+
+  @media (max-width: 760px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .panels { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="bar">
+      <div class="brand">
+        <span class="dot" aria-hidden="true"></span>
+        <div>
+          <h1>VPR Recruiting Activity</h1>
+          <div class="sub">Calls &amp; form leads from marketing — all-time</div>
+        </div>
+      </div>
+      <div class="right">
+        <span class="updated" id="updated"></span>
+        <button class="refresh" id="refresh">Refresh</button>
+      </div>
+    </header>
+
+    <section class="kpis" id="kpis">
+      <div class="kpi accent"><div class="num" id="k-leads">—</div><div class="lab">Form leads</div></div>
+      <div class="kpi"><div class="num" id="k-calls">—</div><div class="lab">Calls</div></div>
+      <div class="kpi"><div class="num" id="k-answered">—</div><div class="lab">Answered</div><div class="note" id="k-answered-note"></div></div>
+      <div class="kpi"><div class="num" id="k-talk">—</div><div class="lab">Avg talk time</div></div>
+    </section>
+
+    <div class="panels">
+      <div class="panel">
+        <h2>Calls <span class="count" id="calls-count"></span></h2>
+        <div class="list" id="calls"><div class="loading">Loading…</div></div>
+      </div>
+      <div class="panel">
+        <h2>Form leads <span class="count" id="leads-count"></span></h2>
+        <div class="list" id="leads"><div class="loading">Loading…</div></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  function titleCase(s) {
+    if (!s) return "";
+    return s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  function formatPhone(raw) {
+    if (!raw) return "";
+    const d = String(raw).replace(/\D/g, "");
+    const ten = d.length === 11 && d.startsWith("1") ? d.slice(1) : d;
+    if (ten.length === 10) return `(${ten.slice(0,3)}) ${ten.slice(3,6)}-${ten.slice(6)}`;
+    return String(raw);
+  }
+
+  function formatDuration(sec) {
+    const s = Number(sec) || 0;
+    if (s <= 0) return "—";
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return m > 0 ? `${m}m ${r}s` : `${r}s`;
+  }
+
+  function formatTime(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleString("en-US", {
+      month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+    });
+  }
+
+  // completed = the call connected. Everything else = didn't connect.
+  function callStatus(status) {
+    switch ((status || "").toLowerCase()) {
+      case "completed": return { cls: "answered", label: "Answered" };
+      case "no-answer": return { cls: "missed",   label: "Missed" };
+      case "busy":      return { cls: "missed",   label: "Busy" };
+      case "canceled":  return { cls: "missed",   label: "Canceled" };
+      case "failed":    return { cls: "failed",   label: "Failed" };
+      case "initiated": return { cls: "other",    label: "In progress" };
+      default:          return { cls: "other",    label: status || "—" };
+    }
+  }
+
+  function leadSource(lead) {
+    return lead.utm_campaign || lead.utm_source || lead.source || "Direct";
+  }
+
+  function renderCalls(calls) {
+    const el = $("calls");
+    $("calls-count").textContent = calls.length ? calls.length : "";
+    if (!calls.length) { el.innerHTML = '<div class="empty">No calls yet.</div>'; return; }
+    el.innerHTML = calls.map((c) => {
+      const name = c.from_caller_name && c.from_caller_name.trim()
+        ? c.from_caller_name : (formatPhone(c.from_number) || "Unknown caller");
+      const loc = [titleCase(c.from_city), c.from_state].filter(Boolean).join(", ");
+      const st = callStatus(c.status);
+      const talk = formatDuration(c.duration_seconds);
+      return `
+        <div class="item">
+          <div>
+            <div class="who">${escapeHtml(name)}</div>
+            <div class="meta">
+              <span class="pill ${st.cls}">${st.label}</span>
+              ${st.cls === "answered" ? `<span class="talk">${talk}</span>` : ""}
+              ${loc ? ` · ${escapeHtml(loc)}` : ""}
+            </div>
+          </div>
+          <div class="when">${formatTime(c.started_at)}</div>
+        </div>`;
+    }).join("");
+  }
+
+  function renderLeads(leads) {
+    const el = $("leads");
+    $("leads-count").textContent = leads.length ? leads.length : "";
+    if (!leads.length) { el.innerHTML = '<div class="empty">No form leads yet.</div>'; return; }
+    el.innerHTML = leads.map((l) => {
+      const name = [l.first_name, l.last_name].filter(Boolean).join(" ") || "—";
+      return `
+        <div class="item">
+          <div>
+            <div class="who">${escapeHtml(name)}</div>
+            <div class="meta">${escapeHtml(leadSource(l))}</div>
+          </div>
+          <div class="when">${formatTime(l.created_at)}</div>
+        </div>`;
+    }).join("");
+  }
+
+  function renderKpis(calls, leads) {
+    const answered = calls.filter((c) => (c.status || "").toLowerCase() === "completed");
+    const talkSecs = answered.map((c) => Number(c.duration_seconds) || 0).filter((s) => s > 0);
+    const avg = talkSecs.length ? Math.round(talkSecs.reduce((a, b) => a + b, 0) / talkSecs.length) : 0;
+
+    $("k-leads").textContent = leads.length;
+    $("k-calls").textContent = calls.length;
+    $("k-answered").textContent = answered.length;
+    $("k-answered-note").textContent = calls.length ? `of ${calls.length} calls` : "";
+    $("k-talk").textContent = avg ? formatDuration(avg) : "—";
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
+
+  function showError(msg) {
+    $("calls").innerHTML = `<div class="error">${escapeHtml(msg)}</div>`;
+    $("leads").innerHTML = "";
+  }
+
+  async function load() {
+    const btn = $("refresh");
+    btn.disabled = true; btn.textContent = "Loading…";
+    try {
+      const r = await fetch("/api/data", { cache: "no-store" });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || "Request failed");
+      const calls = data.calls || [];
+      const leads = data.leads || [];
+      renderKpis(calls, leads);
+      renderCalls(calls);
+      renderLeads(leads);
+      $("updated").textContent = "Updated " + new Date().toLocaleTimeString("en-US",
+        { hour: "numeric", minute: "2-digit" });
+    } catch (e) {
+      showError("Couldn't load data. Check the API connection and refresh.");
+    } finally {
+      btn.disabled = false; btn.textContent = "Refresh";
+    }
+  }
+
+  $("refresh").addEventListener("click", load);
+  load();
+  setInterval(load, 60000); // auto-refresh every minute
+</script>
+</body>
+</html>
