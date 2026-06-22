@@ -78,7 +78,10 @@
   button.refresh:disabled { opacity: .55; cursor: default; box-shadow: none; }
 
   /* KPIs */
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; align-items: stretch; }
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; align-items: stretch; }
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+  .stack > .kpi { flex: 1; }
+  .kpi.stat { display: flex; flex-direction: column; justify-content: center; }
   .kpi {
     position: relative; overflow: hidden;
     background: var(--card-grad), var(--panel);
@@ -104,7 +107,7 @@
   .kpi .note { color: var(--faint); font-size: 11.5px; margin-top: 3px; }
 
   /* Leads-by-source card (spans 2 KPI columns) */
-  .kpi.source { grid-column: span 2; padding: 18px 20px; }
+  .kpi.source { padding: 18px 20px; }
   .src-head { display: flex; align-items: center; justify-content: space-between; }
   .src-title {
     color: var(--muted); font-size: 11.5px; font-weight: 500;
@@ -229,9 +232,9 @@
   /* Entrance */
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   .kpi, .panel { animation: rise .5s ease both; }
-  .kpi:nth-child(1){ animation-delay: .03s; }
-  .kpi:nth-child(2){ animation-delay: .08s; }
-  .kpi:nth-child(3){ animation-delay: .13s; }
+  .kpis > .kpi.source{ animation-delay: .03s; }
+  .stack > .kpi:nth-child(1){ animation-delay: .08s; }
+  .stack > .kpi:nth-child(2){ animation-delay: .13s; }
   .panels .panel:nth-child(1){ animation-delay: .22s; }
   .panels .panel:nth-child(2){ animation-delay: .27s; }
 
@@ -244,8 +247,8 @@
 
   @media (max-width: 760px) {
     .wrap { padding: 26px 16px 56px; }
-    .kpis { grid-template-columns: repeat(2, 1fr); }
-    .kpi.source { grid-column: span 2; }
+    .kpis { grid-template-columns: 1fr; }
+    .stack { flex-direction: row; }
     .panels { grid-template-columns: 1fr; }
     .kpi .num { font-size: 36px; }
   }
@@ -268,22 +271,24 @@
     </header>
 
     <section class="kpis" id="kpis">
-      <div class="kpi accent">
-        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span>
-        <div class="num" id="k-leads">—</div>
-        <div class="lab">Form leads</div>
-      </div>
-      <div class="kpi">
-        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-        <div class="num" id="k-calls">—</div>
-        <div class="lab">Calls</div>
-      </div>
       <div class="kpi source">
         <div class="src-head">
           <span class="src-title">Leads by source</span>
           <span class="src-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="10"/></svg></span>
         </div>
         <div class="src-list" id="src-list"><div class="loading">Loading…</div></div>
+      </div>
+      <div class="stack">
+        <div class="kpi stat accent">
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span>
+          <div class="num" id="k-leads">—</div>
+          <div class="lab">Form leads</div>
+        </div>
+        <div class="kpi stat">
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+          <div class="num" id="k-calls">—</div>
+          <div class="lab">Calls</div>
+        </div>
       </div>
     </section>
 
@@ -346,9 +351,12 @@
     }
   }
 
-  // Show where the lead came from by channel (Email, Facebook, ...), not the campaign.
+  // Real attribution lives in utm_source only. The `source` column is a hard-coded
+  // form default ("email_campaign") that sits on EVERY lead — including the Facebook
+  // ones — so it is not a reliable signal and is not used here. A lead with no
+  // utm_source is genuinely unattributed, so it reads as "Direct", not email.
   function leadSource(lead) {
-    const s = lead.utm_source || lead.source || "";
+    const s = (lead.utm_source || "").trim();
     return s ? titleCase(s) : "Direct";
   }
 
