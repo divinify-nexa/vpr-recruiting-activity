@@ -78,7 +78,7 @@
   button.refresh:disabled { opacity: .55; cursor: default; box-shadow: none; }
 
   /* KPIs */
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; align-items: stretch; }
   .kpi {
     position: relative; overflow: hidden;
     background: var(--card-grad), var(--panel);
@@ -103,6 +103,41 @@
   }
   .kpi .note { color: var(--faint); font-size: 11.5px; margin-top: 3px; }
 
+  /* Leads-by-source card (spans 2 KPI columns) */
+  .kpi.source { grid-column: span 2; padding: 18px 20px; }
+  .src-head { display: flex; align-items: center; justify-content: space-between; }
+  .src-title {
+    color: var(--muted); font-size: 11.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: .07em;
+  }
+  .src-ico { color: var(--faint); opacity: .55; display: flex; }
+  .src-ico svg { width: 18px; height: 18px; display: block; }
+  .src-list { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
+  .src-list .loading, .src-list .src-empty { padding: 12px 2px; color: var(--faint); font-size: 13px; }
+  .src-row {
+    position: relative; display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 8px 12px; border-radius: 9px; overflow: hidden;
+    background: rgba(255,255,255,.025); border: 1px solid var(--line-soft);
+  }
+  .src-bar {
+    position: absolute; top: 0; bottom: 0; left: 0;
+    background: linear-gradient(90deg, rgba(74,108,247,.22), rgba(74,108,247,.04));
+    border-right: 1px solid rgba(74,108,247,.25);
+  }
+  .src-row.top .src-bar {
+    background: linear-gradient(90deg, rgba(255,222,23,.18), rgba(255,222,23,.03));
+    border-right-color: rgba(255,222,23,.32);
+  }
+  .src-name {
+    position: relative; font-size: 13.5px; font-weight: 600; letter-spacing: -.1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .src-count {
+    position: relative; font-size: 16px; font-weight: 800;
+    font-variant-numeric: tabular-nums; letter-spacing: -.3px;
+  }
+  .src-row.top .src-count { color: var(--yellow); }
+
   /* Panels */
   .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   .panel {
@@ -122,6 +157,8 @@
     padding: 2px 9px; border-radius: 999px; min-width: 24px; text-align: center;
   }
   .list { display: flex; flex-direction: column; }
+
+  /* Form-lead rows */
   .item {
     padding: 15px 20px; border-bottom: 1px solid var(--line-soft);
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -133,6 +170,47 @@
   .item .meta { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
   .item .when { color: var(--faint); font-size: 12px; white-space: nowrap; text-align: right; }
   .item .talk { font-variant-numeric: tabular-nums; }
+
+  /* Expandable call rows */
+  .call { border-bottom: 1px solid var(--line-soft); }
+  .call:last-child { border-bottom: none; }
+  .call-head {
+    padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; cursor: pointer; user-select: none; transition: background .15s ease;
+  }
+  .call-head:hover { background: rgba(255,255,255,.025); }
+  .call-head:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+  .call.open > .call-head { background: rgba(255,255,255,.03); }
+  .call-main { min-width: 0; }
+  .call-main .who { font-weight: 600; font-size: 14.5px; letter-spacing: -.1px; }
+  .call-main .meta { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+  .call-main .talk { font-variant-numeric: tabular-nums; }
+  .call-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .call-right .when { color: var(--faint); font-size: 12px; white-space: nowrap; }
+  .chev { color: var(--faint); display: flex; transition: transform .2s ease; }
+  .chev svg { width: 16px; height: 16px; display: block; }
+  .call.open .chev { transform: rotate(180deg); color: var(--muted); }
+
+  .call-detail {
+    display: grid; grid-template-rows: 0fr;
+    transition: grid-template-rows .22s ease;
+  }
+  .call.open .call-detail { grid-template-rows: 1fr; }
+  .detail-inner { overflow: hidden; padding: 0 20px; }
+  .call.open .detail-inner { padding: 2px 20px 16px; }
+  .detail-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 7px 0; border-bottom: 1px solid var(--line-soft);
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .dk {
+    color: var(--faint); font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    white-space: nowrap;
+  }
+  .detail-row .dv {
+    color: var(--text); font-size: 13.5px; font-weight: 500; text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
 
   .pill {
     display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .03em;
@@ -154,7 +232,6 @@
   .kpi:nth-child(1){ animation-delay: .03s; }
   .kpi:nth-child(2){ animation-delay: .08s; }
   .kpi:nth-child(3){ animation-delay: .13s; }
-  .kpi:nth-child(4){ animation-delay: .18s; }
   .panels .panel:nth-child(1){ animation-delay: .22s; }
   .panels .panel:nth-child(2){ animation-delay: .27s; }
 
@@ -162,11 +239,13 @@
     .dot { animation: none; }
     .kpi, .panel { animation: none; }
     .kpi:hover { transform: none; }
+    .call-detail, .chev { transition: none; }
   }
 
   @media (max-width: 760px) {
     .wrap { padding: 26px 16px 56px; }
     .kpis { grid-template-columns: repeat(2, 1fr); }
+    .kpi.source { grid-column: span 2; }
     .panels { grid-template-columns: 1fr; }
     .kpi .num { font-size: 36px; }
   }
@@ -199,16 +278,12 @@
         <div class="num" id="k-calls">—</div>
         <div class="lab">Calls</div>
       </div>
-      <div class="kpi">
-        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
-        <div class="num" id="k-answered">—</div>
-        <div class="lab">Answered</div>
-        <div class="note" id="k-answered-note"></div>
-      </div>
-      <div class="kpi">
-        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-        <div class="num" id="k-talk">—</div>
-        <div class="lab">Avg talk time</div>
+      <div class="kpi source">
+        <div class="src-head">
+          <span class="src-title">Leads by source</span>
+          <span class="src-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="10"/></svg></span>
+        </div>
+        <div class="src-list" id="src-list"><div class="loading">Loading…</div></div>
       </div>
     </section>
 
@@ -226,6 +301,7 @@
 
 <script>
   const $ = (id) => document.getElementById(id);
+  const openCalls = new Set(); // remembers which call drawers are open across refreshes
 
   function titleCase(s) {
     if (!s) return "";
@@ -276,29 +352,88 @@
     return s ? titleCase(s) : "Direct";
   }
 
+  // Stable key per call so an open drawer survives the 60s auto-refresh.
+  function callKey(c) {
+    return c.call_sid || `${c.from_number || ""}|${c.started_at || ""}`;
+  }
+
+  // Leads grouped by source, biggest first, with a proportional bar.
+  function renderSources(leads) {
+    const el = $("src-list");
+    if (!leads.length) { el.innerHTML = '<div class="src-empty">No leads yet.</div>'; return; }
+    const counts = {};
+    leads.forEach((l) => {
+      const s = leadSource(l);
+      counts[s] = (counts[s] || 0) + 1;
+    });
+    const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const max = rows[0][1] || 1;
+    el.innerHTML = rows.map(([name, n], i) => {
+      const pct = Math.max(6, Math.round((n / max) * 100)); // floor so 1-lead bars stay visible
+      return `
+        <div class="src-row${i === 0 ? " top" : ""}">
+          <span class="src-bar" style="width:${pct}%"></span>
+          <span class="src-name">${escapeHtml(name)}</span>
+          <span class="src-count">${n}</span>
+        </div>`;
+    }).join("");
+  }
+
+  // Detail rows shown when a call is expanded. Optional fields appear only if present.
+  function callDetail(c) {
+    const st = callStatus(c.status);
+    const rows = [["Status", st.label]];
+    rows.push(["Talk time", st.cls === "answered" ? formatDuration(c.duration_seconds) : "Didn't connect"]);
+    const phone = formatPhone(c.from_number);
+    if (phone) rows.push(["Phone", phone]);
+    const loc = [titleCase(c.from_city), c.from_state, c.from_zip].filter(Boolean).join(", ");
+    if (loc) rows.push(["Location", loc]);
+    if (c.from_country && String(c.from_country).toUpperCase() !== "US") rows.push(["Country", c.from_country]);
+    if (c.started_at) rows.push(["Started", formatTime(c.started_at)]);
+    if (c.ended_at) rows.push(["Ended", formatTime(c.ended_at)]);
+    return rows.map(([k, v]) =>
+      `<div class="detail-row"><span class="dk">${k}</span><span class="dv">${escapeHtml(String(v))}</span></div>`
+    ).join("");
+  }
+
   function renderCalls(calls) {
     const el = $("calls");
     $("calls-count").textContent = calls.length ? calls.length : "0";
     if (!calls.length) { el.innerHTML = '<div class="empty">No calls yet.</div>'; return; }
-    el.innerHTML = calls.map((c) => {
+    el.innerHTML = calls.map((c, i) => {
       const name = c.from_caller_name && c.from_caller_name.trim()
         ? c.from_caller_name : (formatPhone(c.from_number) || "Unknown caller");
       const loc = [titleCase(c.from_city), c.from_state].filter(Boolean).join(", ");
       const st = callStatus(c.status);
       const talk = formatDuration(c.duration_seconds);
+      const key = callKey(c);
       return `
-        <div class="item">
-          <div>
-            <div class="who">${escapeHtml(name)}</div>
-            <div class="meta">
-              <span class="pill ${st.cls}">${st.label}</span>
-              ${st.cls === "answered" ? `<span class="talk">${talk}</span>` : ""}
-              ${loc ? ` · ${escapeHtml(loc)}` : ""}
+        <div class="call" data-key="${escapeHtml(key)}">
+          <div class="call-head" role="button" tabindex="0" aria-expanded="false" aria-controls="cd-${i}">
+            <div class="call-main">
+              <div class="who">${escapeHtml(name)}</div>
+              <div class="meta">
+                <span class="pill ${st.cls}">${st.label}</span>
+                ${st.cls === "answered" ? `<span class="talk">${talk}</span>` : ""}
+                ${loc ? ` · ${escapeHtml(loc)}` : ""}
+              </div>
+            </div>
+            <div class="call-right">
+              <span class="when">${formatTime(c.started_at)}</span>
+              <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
           </div>
-          <div class="when">${formatTime(c.started_at)}</div>
+          <div class="call-detail" id="cd-${i}"><div class="detail-inner">${callDetail(c)}</div></div>
         </div>`;
     }).join("");
+
+    // Re-open any drawers that were open before this refresh.
+    el.querySelectorAll(".call").forEach((node) => {
+      if (openCalls.has(node.dataset.key)) {
+        node.classList.add("open");
+        node.querySelector(".call-head").setAttribute("aria-expanded", "true");
+      }
+    });
   }
 
   function renderLeads(leads) {
@@ -319,15 +454,8 @@
   }
 
   function renderKpis(calls, leads) {
-    const answered = calls.filter((c) => (c.status || "").toLowerCase() === "completed");
-    const talkSecs = answered.map((c) => Number(c.duration_seconds) || 0).filter((s) => s > 0);
-    const avg = talkSecs.length ? Math.round(talkSecs.reduce((a, b) => a + b, 0) / talkSecs.length) : 0;
-
     $("k-leads").textContent = leads.length;
     $("k-calls").textContent = calls.length;
-    $("k-answered").textContent = answered.length;
-    $("k-answered-note").textContent = calls.length ? `of ${calls.length} calls` : "";
-    $("k-talk").textContent = avg ? formatDuration(avg) : "—";
   }
 
   function escapeHtml(s) {
@@ -339,7 +467,27 @@
   function showError(msg) {
     $("calls").innerHTML = `<div class="error">${escapeHtml(msg)}</div>`;
     $("leads").innerHTML = "";
+    $("src-list").innerHTML = `<div class="src-empty">—</div>`;
   }
+
+  function toggleCall(head) {
+    const call = head.closest(".call");
+    if (!call) return;
+    const open = call.classList.toggle("open");
+    head.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) openCalls.add(call.dataset.key); else openCalls.delete(call.dataset.key);
+  }
+
+  // Event delegation: container persists across refreshes, so bind once.
+  $("calls").addEventListener("click", (e) => {
+    const head = e.target.closest(".call-head");
+    if (head) toggleCall(head);
+  });
+  $("calls").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const head = e.target.closest(".call-head");
+    if (head) { e.preventDefault(); toggleCall(head); }
+  });
 
   async function load() {
     const btn = $("refresh");
@@ -351,6 +499,7 @@
       const calls = data.calls || [];
       const leads = data.leads || [];
       renderKpis(calls, leads);
+      renderSources(leads);
       renderCalls(calls);
       renderLeads(leads);
       $("updated").textContent = "Updated " + new Date().toLocaleTimeString("en-US",
