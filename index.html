@@ -20,6 +20,7 @@
     --yellow: #FFDE17;
     --yellow-hi: #FFE85C;
     --blue: #4A6CF7;
+    --blue-soft: #9DB2FF;
     --green: #34D399;
     --amber: #FBBF24;
     --red: #F87171;
@@ -64,7 +65,7 @@
   .brand h1 { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: -.2px; }
   .brand .sub { color: var(--muted); font-size: 12.5px; margin-top: 1px; }
   .right { display: flex; align-items: center; gap: 14px; }
-  .updated { color: var(--faint); font-size: 12px; }
+  .updated { color: var(--faint); font-size: 12px; transition: color .2s ease; }
   button.refresh {
     background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
     color: var(--text); border: 1px solid rgba(255,255,255,.1);
@@ -81,7 +82,6 @@
   .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; align-items: stretch; }
   .stack { display: flex; flex-direction: column; gap: 16px; }
   .stack > .kpi { flex: 1; }
-  .kpi.stat { display: flex; flex-direction: column; justify-content: center; }
   .kpi {
     position: relative; overflow: hidden;
     background: var(--card-grad), var(--panel);
@@ -90,23 +90,45 @@
     transition: transform .16s ease, border-color .16s ease;
   }
   .kpi:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.12); }
-  .kpi .ico { position: absolute; top: 16px; right: 16px; color: var(--faint); opacity: .55; }
-  .kpi .ico svg { width: 19px; height: 19px; display: block; }
   .kpi .num {
     font-size: 42px; font-weight: 800; letter-spacing: -1.4px;
     font-variant-numeric: tabular-nums; line-height: 1; margin-top: 6px;
-  }
-  .kpi.accent .num {
-    background: linear-gradient(180deg, var(--yellow-hi), var(--yellow));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   .kpi .lab {
     color: var(--muted); font-size: 11.5px; font-weight: 500;
     text-transform: uppercase; letter-spacing: .07em; margin-top: 12px;
   }
-  .kpi .note { color: var(--faint); font-size: 11.5px; margin-top: 3px; }
 
-  /* Leads-by-source card (spans 2 KPI columns) */
+  /* Split (Form leads | Calls) + Scoreboard share a centered, divided layout */
+  .kpi.split, .kpi.score { display: flex; align-items: stretch; padding: 0; }
+  .kpi.split .half, .kpi.score .seg {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 18px 10px; text-align: center;
+  }
+  .vdiv { width: 1px; background: var(--line); align-self: stretch; margin: 16px 0; flex: none; }
+  .kpi.split .num { margin-top: 0; }
+  .kpi.split .half.accent .num {
+    background: linear-gradient(180deg, var(--yellow-hi), var(--yellow));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .kpi.split .lab { margin-top: 10px; }
+
+  .kpi.score .seg { position: relative; cursor: pointer; transition: background .15s ease; }
+  .kpi.score .seg:hover { background: rgba(255,255,255,.03); }
+  .kpi.score .seg:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+  .seg-num { font-size: 30px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; line-height: 1; color: var(--text); transition: color .15s ease; }
+  .seg-lab { color: var(--muted); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; margin-top: 9px; }
+  .seg.active { background: rgba(255,255,255,.04); }
+  .seg.active[data-status="captured"] { color: var(--blue-soft); }
+  .seg.active[data-status="awaiting"] { color: var(--amber); }
+  .seg.active[data-status="recruited"] { color: var(--green); }
+  .seg.active .seg-num { color: currentColor; }
+  .seg.active::before {
+    content: ""; position: absolute; left: 16px; right: 16px; top: 0; height: 2px;
+    background: currentColor; border-radius: 0 0 2px 2px;
+  }
+
+  /* Leads-by-source card */
   .kpi.source { padding: 18px 20px; }
   .src-head { display: flex; align-items: center; justify-content: space-between; }
   .src-title {
@@ -161,43 +183,59 @@
   }
   .list { display: flex; flex-direction: column; }
 
-  /* Form-lead rows */
-  .item {
-    padding: 15px 20px; border-bottom: 1px solid var(--line-soft);
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  /* Shared row layout: name + status on the left, time + source/outcome on the right */
+  .item, .call-head {
+    padding: 14px 20px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
     transition: background .15s ease;
   }
+  .item { border-bottom: 1px solid var(--line-soft); }
   .item:last-child { border-bottom: none; }
   .item:hover { background: rgba(255,255,255,.025); }
-  .item .who { font-weight: 600; font-size: 14.5px; letter-spacing: -.1px; }
-  .item .meta { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
-  .item .when { color: var(--faint); font-size: 12px; white-space: nowrap; text-align: right; }
-  .item .talk { font-variant-numeric: tabular-nums; }
+
+  .row-main { min-width: 0; }
+  .row-main .who { font-weight: 600; font-size: 14.5px; letter-spacing: -.1px; }
+  .row-right { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; text-align: right; }
+  .row-right .when { color: var(--faint); font-size: 12px; white-space: nowrap; }
+  .row-right .src { color: var(--text); font-size: 13px; font-weight: 600; white-space: nowrap; letter-spacing: -.1px; }
+  .row-right .outcome { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .row-right .outcome.answered { color: var(--green); }
+  .row-right .outcome.missed { color: var(--amber); }
+  .row-right .outcome.failed { color: var(--red); }
+  .row-right .outcome.other { color: var(--muted); }
+
+  /* Status picker chip */
+  .status-wrap { position: relative; display: inline-flex; margin-top: 8px; color: var(--faint); }
+  .status-wrap::after {
+    content: ""; position: absolute; right: 9px; top: 50%; width: 6px; height: 6px;
+    border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+    transform: translateY(-70%) rotate(45deg); pointer-events: none; opacity: .8;
+  }
+  .status-select {
+    appearance: none; -webkit-appearance: none; font-family: inherit;
+    font-size: 11px; font-weight: 600; letter-spacing: .03em; line-height: 1.4;
+    padding: 3px 22px 3px 10px; border-radius: 999px; cursor: pointer;
+    border: 1px solid transparent; transition: border-color .15s ease, background-color .15s ease;
+  }
+  .status-select:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .status-select:disabled { opacity: .5; cursor: default; }
+  .status-select.st-captured { background-color: rgba(74,108,247,.13); color: var(--blue-soft); border-color: rgba(74,108,247,.30); }
+  .status-select.st-awaiting { background-color: rgba(251,191,36,.13); color: var(--amber); border-color: rgba(251,191,36,.30); }
+  .status-select.st-recruited { background-color: rgba(52,211,153,.13); color: var(--green); border-color: rgba(52,211,153,.30); }
 
   /* Expandable call rows */
   .call { border-bottom: 1px solid var(--line-soft); }
   .call:last-child { border-bottom: none; }
-  .call-head {
-    padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; cursor: pointer; user-select: none; transition: background .15s ease;
-  }
+  .call-head { cursor: pointer; user-select: none; }
   .call-head:hover { background: rgba(255,255,255,.025); }
   .call-head:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
   .call.open > .call-head { background: rgba(255,255,255,.03); }
-  .call-main { min-width: 0; }
-  .call-main .who { font-weight: 600; font-size: 14.5px; letter-spacing: -.1px; }
-  .call-main .meta { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
-  .call-main .talk { font-variant-numeric: tabular-nums; }
-  .call-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .call-right .when { color: var(--faint); font-size: 12px; white-space: nowrap; }
-  .chev { color: var(--faint); display: flex; transition: transform .2s ease; }
+  .row-end { display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0; }
+  .chev { color: var(--faint); display: flex; margin-top: 1px; transition: transform .2s ease; }
   .chev svg { width: 16px; height: 16px; display: block; }
   .call.open .chev { transform: rotate(180deg); color: var(--muted); }
 
-  .call-detail {
-    display: grid; grid-template-rows: 0fr;
-    transition: grid-template-rows .22s ease;
-  }
+  .call-detail { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .22s ease; }
   .call.open .call-detail { grid-template-rows: 1fr; }
   .detail-inner { overflow: hidden; padding: 0 20px; }
   .call.open .detail-inner { padding: 2px 20px 16px; }
@@ -206,19 +244,12 @@
     padding: 7px 0; border-bottom: 1px solid var(--line-soft);
   }
   .detail-row:last-child { border-bottom: none; }
-  .detail-row .dk {
-    color: var(--faint); font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
-    white-space: nowrap;
-  }
-  .detail-row .dv {
-    color: var(--text); font-size: 13.5px; font-weight: 500; text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
+  .detail-row .dk { color: var(--faint); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+  .detail-row .dv { color: var(--text); font-size: 13.5px; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
 
   .pill {
     display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .03em;
-    padding: 2.5px 9px; border-radius: 999px; margin-right: 8px; vertical-align: 1px;
-    border: 1px solid transparent;
+    padding: 2.5px 9px; border-radius: 999px; border: 1px solid transparent;
   }
   .pill.answered { background: rgba(52,211,153,.12); color: var(--green); border-color: rgba(52,211,153,.25); }
   .pill.missed   { background: rgba(251,191,36,.12); color: var(--amber); border-color: rgba(251,191,36,.25); }
@@ -248,9 +279,9 @@
   @media (max-width: 760px) {
     .wrap { padding: 26px 16px 56px; }
     .kpis { grid-template-columns: 1fr; }
-    .stack { flex-direction: row; }
     .panels { grid-template-columns: 1fr; }
-    .kpi .num { font-size: 36px; }
+    .kpi .num, .kpi.split .num { font-size: 34px; }
+    .seg-num { font-size: 26px; }
   }
 </style>
 </head>
@@ -278,16 +309,35 @@
         </div>
         <div class="src-list" id="src-list"><div class="loading">Loading…</div></div>
       </div>
+
       <div class="stack">
-        <div class="kpi stat accent">
-          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span>
-          <div class="num" id="k-leads">—</div>
-          <div class="lab">Form leads</div>
+        <div class="kpi split">
+          <div class="half accent">
+            <div class="num" id="k-leads">—</div>
+            <div class="lab">Form leads</div>
+          </div>
+          <div class="vdiv"></div>
+          <div class="half">
+            <div class="num" id="k-calls">—</div>
+            <div class="lab">Calls</div>
+          </div>
         </div>
-        <div class="kpi stat">
-          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-          <div class="num" id="k-calls">—</div>
-          <div class="lab">Calls</div>
+
+        <div class="kpi score" id="score">
+          <div class="seg" data-status="captured" role="button" tabindex="0" title="Filter by Captured">
+            <div class="seg-num" id="sc-captured">0</div>
+            <div class="seg-lab">Captured</div>
+          </div>
+          <div class="vdiv"></div>
+          <div class="seg" data-status="awaiting" role="button" tabindex="0" title="Filter by Awaiting">
+            <div class="seg-num" id="sc-awaiting">0</div>
+            <div class="seg-lab">Awaiting</div>
+          </div>
+          <div class="vdiv"></div>
+          <div class="seg" data-status="recruited" role="button" tabindex="0" title="Filter by Recruited">
+            <div class="seg-num" id="sc-recruited">0</div>
+            <div class="seg-lab">Recruited</div>
+          </div>
         </div>
       </div>
     </section>
@@ -306,11 +356,22 @@
 
 <script>
   const $ = (id) => document.getElementById(id);
-  const openCalls = new Set(); // remembers which call drawers are open across refreshes
+
+  const STATUSES = ["captured", "awaiting", "recruited"];
+  const state = { calls: [], leads: [] };   // latest data from /api/data
+  let activeFilter = null;                   // null | "captured" | "awaiting" | "recruited"
+  const openCalls = new Set();               // remembers which call drawers are open across refreshes
+
+  function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
   function titleCase(s) {
     if (!s) return "";
     return s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  function normStatus(s) {
+    s = (s || "").toLowerCase().trim();
+    return STATUSES.includes(s) ? s : "captured";
   }
 
   function formatPhone(raw) {
@@ -351,10 +412,8 @@
     }
   }
 
-  // Real attribution lives in utm_source only. The `source` column is a hard-coded
-  // form default ("email_campaign") that sits on EVERY lead — including the Facebook
-  // ones — so it is not a reliable signal and is not used here. A lead with no
-  // utm_source is genuinely unattributed, so it reads as "Direct", not email.
+  // Marketing source = utm_source only. The `source` column is a hard-coded form
+  // default ("email_campaign") on every lead, so it is ignored. Blank = "Direct".
   function leadSource(lead) {
     const s = (lead.utm_source || "").trim();
     return s ? titleCase(s) : "Direct";
@@ -365,7 +424,29 @@
     return c.call_sid || `${c.from_number || ""}|${c.started_at || ""}`;
   }
 
-  // Leads grouped by source, biggest first, with a proportional bar.
+  // Pipeline counts across BOTH tables (always all-time, never filtered).
+  function statusCounts() {
+    const c = { captured: 0, awaiting: 0, recruited: 0 };
+    state.leads.forEach((l) => { c[normStatus(l.lead_status)]++; });
+    state.calls.forEach((x) => { c[normStatus(x.lead_status)]++; });
+    return c;
+  }
+
+  // The Captured/Awaiting/Recruited picker for a row.
+  function statusSelect(kind, id, current) {
+    const cur = normStatus(current);
+    const opts = STATUSES.map((s) =>
+      `<option value="${s}"${s === cur ? " selected" : ""}>${cap(s)}</option>`
+    ).join("");
+    const dis = id ? "" : " disabled";
+    return `<span class="status-wrap"><select class="status-select st-${cur}" data-kind="${kind}" data-id="${escapeHtml(id)}" data-status="${cur}" aria-label="Recruiting status"${dis}>${opts}</select></span>`;
+  }
+
+  function emptyMsg(noun) {
+    return activeFilter ? `No ${cap(activeFilter)} ${noun}.` : `No ${noun} yet.`;
+  }
+
+  // Leads grouped by source, biggest first, with a proportional bar. Always all-time.
   function renderSources(leads) {
     const el = $("src-list");
     if (!leads.length) { el.innerHTML = '<div class="src-empty">No leads yet.</div>'; return; }
@@ -377,7 +458,7 @@
     const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
     const max = rows[0][1] || 1;
     el.innerHTML = rows.map(([name, n], i) => {
-      const pct = Math.max(6, Math.round((n / max) * 100)); // floor so 1-lead bars stay visible
+      const pct = Math.max(6, Math.round((n / max) * 100));
       return `
         <div class="src-row${i === 0 ? " top" : ""}">
           <span class="src-bar" style="width:${pct}%"></span>
@@ -394,11 +475,9 @@
     rows.push(["Talk time", st.cls === "answered" ? formatDuration(c.duration_seconds) : "Didn't connect"]);
     const phone = formatPhone(c.from_number);
     if (phone) rows.push(["Phone", phone]);
-    const loc = [titleCase(c.from_city), c.from_state, c.from_zip].filter(Boolean).join(", ");
+    const loc = [titleCase(c.from_city), c.from_state].filter(Boolean).join(", ");
     if (loc) rows.push(["Location", loc]);
-    if (c.from_country && String(c.from_country).toUpperCase() !== "US") rows.push(["Country", c.from_country]);
     if (c.started_at) rows.push(["Started", formatTime(c.started_at)]);
-    if (c.ended_at) rows.push(["Ended", formatTime(c.ended_at)]);
     return rows.map(([k, v]) =>
       `<div class="detail-row"><span class="dk">${k}</span><span class="dv">${escapeHtml(String(v))}</span></div>`
     ).join("");
@@ -407,27 +486,27 @@
   function renderCalls(calls) {
     const el = $("calls");
     $("calls-count").textContent = calls.length ? calls.length : "0";
-    if (!calls.length) { el.innerHTML = '<div class="empty">No calls yet.</div>'; return; }
+    if (!calls.length) { el.innerHTML = `<div class="empty">${emptyMsg("calls")}</div>`; return; }
     el.innerHTML = calls.map((c, i) => {
       const name = c.from_caller_name && c.from_caller_name.trim()
         ? c.from_caller_name : (formatPhone(c.from_number) || "Unknown caller");
-      const loc = [titleCase(c.from_city), c.from_state].filter(Boolean).join(", ");
       const st = callStatus(c.status);
-      const talk = formatDuration(c.duration_seconds);
+      let outcome = st.label;
+      if (st.cls === "answered") outcome += " · " + formatDuration(c.duration_seconds);
       const key = callKey(c);
+      const id = c.call_sid || "";
       return `
         <div class="call" data-key="${escapeHtml(key)}">
           <div class="call-head" role="button" tabindex="0" aria-expanded="false" aria-controls="cd-${i}">
-            <div class="call-main">
+            <div class="row-main">
               <div class="who">${escapeHtml(name)}</div>
-              <div class="meta">
-                <span class="pill ${st.cls}">${st.label}</span>
-                ${st.cls === "answered" ? `<span class="talk">${talk}</span>` : ""}
-                ${loc ? ` · ${escapeHtml(loc)}` : ""}
-              </div>
+              ${statusSelect("call", id, c.lead_status)}
             </div>
-            <div class="call-right">
-              <span class="when">${formatTime(c.started_at)}</span>
+            <div class="row-end">
+              <div class="row-right">
+                <div class="when">${formatTime(c.started_at)}</div>
+                <div class="outcome ${st.cls}">${escapeHtml(outcome)}</div>
+              </div>
               <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
           </div>
@@ -435,7 +514,6 @@
         </div>`;
     }).join("");
 
-    // Re-open any drawers that were open before this refresh.
     el.querySelectorAll(".call").forEach((node) => {
       if (openCalls.has(node.dataset.key)) {
         node.classList.add("open");
@@ -447,23 +525,42 @@
   function renderLeads(leads) {
     const el = $("leads");
     $("leads-count").textContent = leads.length ? leads.length : "0";
-    if (!leads.length) { el.innerHTML = '<div class="empty">No form leads yet.</div>'; return; }
+    if (!leads.length) { el.innerHTML = `<div class="empty">${emptyMsg("form leads")}</div>`; return; }
     el.innerHTML = leads.map((l) => {
       const name = [l.first_name, l.last_name].filter(Boolean).join(" ") || "—";
+      const id = l.id || "";
       return `
         <div class="item">
-          <div>
+          <div class="row-main">
             <div class="who">${escapeHtml(name)}</div>
-            <div class="meta">${escapeHtml(leadSource(l))}</div>
+            ${statusSelect("lead", id, l.lead_status)}
           </div>
-          <div class="when">${formatTime(l.created_at)}</div>
+          <div class="row-right">
+            <div class="when">${formatTime(l.created_at)}</div>
+            <div class="src">${escapeHtml(leadSource(l))}</div>
+          </div>
         </div>`;
     }).join("");
   }
 
-  function renderKpis(calls, leads) {
-    $("k-leads").textContent = leads.length;
-    $("k-calls").textContent = calls.length;
+  // Single render pass: KPI totals, scoreboard, active highlight, filtered lists.
+  function render() {
+    $("k-leads").textContent = state.leads.length;
+    $("k-calls").textContent = state.calls.length;
+
+    const counts = statusCounts();
+    STATUSES.forEach((s) => { $("sc-" + s).textContent = counts[s]; });
+
+    document.querySelectorAll(".seg").forEach((seg) =>
+      seg.classList.toggle("active", seg.dataset.status === activeFilter)
+    );
+
+    const fl = activeFilter ? state.leads.filter((l) => normStatus(l.lead_status) === activeFilter) : state.leads;
+    const fc = activeFilter ? state.calls.filter((c) => normStatus(c.lead_status) === activeFilter) : state.calls;
+
+    renderSources(state.leads);
+    renderCalls(fc);
+    renderLeads(fl);
   }
 
   function escapeHtml(s) {
@@ -478,6 +575,13 @@
     $("src-list").innerHTML = `<div class="src-empty">—</div>`;
   }
 
+  function noteSaveError() {
+    const u = $("updated");
+    u.textContent = "Couldn't save status — try again";
+    u.style.color = "var(--amber)";
+    setTimeout(() => { u.style.color = ""; }, 4000);
+  }
+
   function toggleCall(head) {
     const call = head.closest(".call");
     if (!call) return;
@@ -486,15 +590,67 @@
     if (open) openCalls.add(call.dataset.key); else openCalls.delete(call.dataset.key);
   }
 
-  // Event delegation: container persists across refreshes, so bind once.
+  // Update the in-memory row, then save to Supabase. Optimistic with rollback on failure.
+  function applyStatusLocally(kind, id, status) {
+    const arr = kind === "lead" ? state.leads : state.calls;
+    const key = kind === "lead" ? "id" : "call_sid";
+    const row = arr.find((r) => String(r[key]) === String(id));
+    if (row) row.lead_status = status;
+  }
+
+  async function changeStatus(kind, id, status, prev) {
+    applyStatusLocally(kind, id, status);
+    render();
+    try {
+      const r = await fetch("/api/set-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind, id, status }),
+      });
+      if (!r.ok) throw new Error("save failed");
+    } catch (e) {
+      applyStatusLocally(kind, id, prev); // roll back
+      render();
+      noteSaveError();
+    }
+  }
+
+  // --- Event wiring (bound once; containers persist across refreshes) ---
+
+  // Status picker changes (works for both lists via delegation).
+  document.addEventListener("change", (e) => {
+    const sel = e.target.closest(".status-select");
+    if (!sel) return;
+    changeStatus(sel.dataset.kind, sel.dataset.id, sel.value, sel.dataset.status);
+  });
+
+  // Scoreboard filter clicks.
+  function activateSeg(seg) {
+    const s = seg.dataset.status;
+    activeFilter = activeFilter === s ? null : s;
+    render();
+  }
+  $("score").addEventListener("click", (e) => {
+    const seg = e.target.closest(".seg");
+    if (seg) activateSeg(seg);
+  });
+  $("score").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const seg = e.target.closest(".seg");
+    if (seg) { e.preventDefault(); activateSeg(seg); }
+  });
+
+  // Call drawer expand/collapse — but never when interacting with the status picker.
   $("calls").addEventListener("click", (e) => {
+    if (e.target.closest(".status-wrap")) return;
     const head = e.target.closest(".call-head");
     if (head) toggleCall(head);
   });
   $("calls").addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
+    if (e.target.closest(".status-wrap")) return;
     const head = e.target.closest(".call-head");
-    if (head) { e.preventDefault(); toggleCall(head); }
+    if (head && e.target === head) { e.preventDefault(); toggleCall(head); }
   });
 
   async function load() {
@@ -504,12 +660,9 @@
       const r = await fetch("/api/data", { cache: "no-store" });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Request failed");
-      const calls = data.calls || [];
-      const leads = data.leads || [];
-      renderKpis(calls, leads);
-      renderSources(leads);
-      renderCalls(calls);
-      renderLeads(leads);
+      state.calls = data.calls || [];
+      state.leads = data.leads || [];
+      render();
       $("updated").textContent = "Updated " + new Date().toLocaleTimeString("en-US",
         { hour: "numeric", minute: "2-digit" });
     } catch (e) {
