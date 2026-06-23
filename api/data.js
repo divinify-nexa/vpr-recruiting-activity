@@ -18,16 +18,18 @@ module.exports = async function handler(req, res) {
   };
 
   // Only pull the fields the dashboard actually shows.
-  // Calls: who called, where, did they connect, how long. No call_sid / raw_payload.
-  // Leads: name + where it came from + when. No email/phone (PII stays off the page).
+  // Calls: who called, where, did they connect, how long, recruiting status.
+  //   call_sid is included as a stable row id for status updates (not PII). No raw_payload.
+  // Leads: name + where it came from + when + recruiting status.
+  //   id is included as a stable row id for status updates (not PII). No email/phone.
   const callsUrl =
     `${SUPABASE_URL}/rest/v1/vpr_calls` +
-    `?select=from_caller_name,from_number,from_city,from_state,status,duration_seconds,started_at` +
+    `?select=call_sid,from_caller_name,from_number,from_city,from_state,status,duration_seconds,started_at,lead_status` +
     `&order=started_at.desc&limit=1000`;
 
   const leadsUrl =
     `${SUPABASE_URL}/rest/v1/vpr_leads` +
-    `?select=first_name,last_name,source,utm_source,utm_campaign,created_at` +
+    `?select=id,first_name,last_name,source,utm_source,utm_campaign,created_at,lead_status` +
     `&order=created_at.desc&limit=1000`;
 
   try {
