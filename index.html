@@ -157,6 +157,12 @@
     position: relative; font-size: 13.5px; font-weight: 600; letter-spacing: -.1px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  /* Per-source page breakdown (e.g. "4 Benefits · 1 Careers") */
+  .src-split {
+    position: relative; margin-left: auto; flex-shrink: 0;
+    color: var(--faint); font-size: 11px; font-weight: 500;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
   .src-count {
     position: relative; font-size: 16px; font-weight: 800;
     font-variant-numeric: tabular-nums; letter-spacing: -.3px;
@@ -203,6 +209,16 @@
   .row-right .outcome.missed { color: var(--amber); }
   .row-right .outcome.failed { color: var(--red); }
   .row-right .outcome.other { color: var(--muted); }
+
+  /* Landing-page tag on lead rows (Channel × Page) */
+  .page-tag {
+    display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .04em;
+    padding: 2px 8px; border-radius: 999px; border: 1px solid transparent;
+    text-transform: uppercase; white-space: nowrap;
+  }
+  .page-tag.benefits { background: rgba(74,108,247,.12); color: var(--blue-soft); border-color: rgba(74,108,247,.28); }
+  .page-tag.careers  { background: rgba(255,222,23,.10); color: var(--yellow); border-color: rgba(255,222,23,.28); }
+  .page-tag.otherpg  { background: rgba(147,156,180,.12); color: var(--muted); border-color: rgba(147,156,180,.22); }
 
   /* Status picker chip */
   .status-wrap { position: relative; display: inline-flex; margin-top: 8px; color: var(--faint); }
@@ -282,6 +298,7 @@
     .panels { grid-template-columns: 1fr; }
     .kpi .num, .kpi.split .num { font-size: 34px; }
     .seg-num { font-size: 26px; }
+    .src-split { display: none; } /* keep source rows readable on narrow screens */
   }
 </style>
 </head>
@@ -412,11 +429,26 @@
     }
   }
 
-  // Marketing source = utm_source only. The `source` column is a hard-coded form
-  // default ("email_campaign") on every lead, so it is ignored. Blank = "Direct".
+  // Marketing source (channel) = utm_source only. The `source` column varies by
+  // page (hard-coded "email_campaign" on vprbenefits, domain on vprcareers), so
+  // it is ignored for channel purposes. Blank utm_source = "Direct".
   function leadSource(lead) {
     const s = (lead.utm_source || "").trim();
     return s ? titleCase(s) : "Direct";
+  }
+
+  // Landing page = derived from page_url, which every lead row has (works
+  // retroactively on historical leads). Channel × Page: leadSource() answers
+  // "where did they come FROM", leadPage() answers "where did they CONVERT".
+  function leadPage(lead) {
+    const u = (lead.page_url || "").toLowerCase();
+    if (u.includes("vprbenefits")) return { key: "benefits", label: "Benefits" };
+    if (u.includes("vprcareers"))  return { key: "careers",  label: "Careers" };
+    if (!u) return null;
+    try {
+      const h = new URL(lead.page_url).hostname.replace(/^www\./, "");
+      return h ? { key: "otherpg", label: h } : null;
+    } catch (e) { return null; }
   }
 
   // Stable key per call so an open drawer survives the 60s auto-refresh.
@@ -446,24 +478,35 @@
     return activeFilter ? `No ${cap(activeFilter)} ${noun}.` : `No ${noun} yet.`;
   }
 
-  // Leads grouped by source, biggest first, with a proportional bar. Always all-time.
+  // Leads grouped by channel, biggest first, with a proportional bar and a
+  // per-channel landing-page split (e.g. "4 Benefits · 1 Careers"). Always all-time.
   function renderSources(leads) {
     const el = $("src-list");
     if (!leads.length) { el.innerHTML = '<div class="src-empty">No leads yet.</div>'; return; }
-    const counts = {};
+    const counts = {}; // channel -> { n, pages: { label: count } }
     leads.forEach((l) => {
       const s = leadSource(l);
-      counts[s] = (counts[s] || 0) + 1;
+      if (!counts[s]) counts[s] = { n: 0, pages: {} };
+      counts[s].n++;
+      const p = leadPage(l);
+      if (p) counts[s].pages[p.label] = (counts[s].pages[p.label] || 0) + 1;
     });
-    const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-    const max = rows[0][1] || 1;
-    el.innerHTML = rows.map(([name, n], i) => {
-      const pct = Math.max(6, Math.round((n / max) * 100));
+    const rows = Object.entries(counts).sort((a, b) => b[1].n - a[1].n);
+    const max = rows[0][1].n || 1;
+    el.innerHTML = rows.map(([name, data], i) => {
+      const pct = Math.max(6, Math.round((data.n / max) * 100));
+      const pageEntries = Object.entries(data.pages).sort((a, b) => b[1] - a[1]);
+      // Only show the split when it adds information (more than one page in play
+      // for this channel); a single-page channel just repeats the total.
+      const split = pageEntries.length > 1
+        ? `<span class="src-split">${pageEntries.map(([pl, pn]) => `${pn} ${escapeHtml(pl)}`).join(" · ")}</span>`
+        : "";
       return `
         <div class="src-row${i === 0 ? " top" : ""}">
           <span class="src-bar" style="width:${pct}%"></span>
           <span class="src-name">${escapeHtml(name)}</span>
-          <span class="src-count">${n}</span>
+          ${split}
+          <span class="src-count">${data.n}</span>
         </div>`;
     }).join("");
   }
@@ -529,6 +572,8 @@
     el.innerHTML = leads.map((l) => {
       const name = [l.first_name, l.last_name].filter(Boolean).join(" ") || "—";
       const id = l.id || "";
+      const p = leadPage(l);
+      const pageTag = p ? `<span class="page-tag ${p.key}">${escapeHtml(p.label)}</span>` : "";
       return `
         <div class="item">
           <div class="row-main">
@@ -538,6 +583,7 @@
           <div class="row-right">
             <div class="when">${formatTime(l.created_at)}</div>
             <div class="src">${escapeHtml(leadSource(l))}</div>
+            ${pageTag}
           </div>
         </div>`;
     }).join("");
