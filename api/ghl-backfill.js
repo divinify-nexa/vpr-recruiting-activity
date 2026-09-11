@@ -51,6 +51,21 @@ async function sb(path, opts = {}) {
 }
 
 // Walk one pipeline, following GHL's cursor until exhausted.
+// Stage id -> stage name, for one pipeline. GHL's opportunity search returns
+// pipelineStageId but not the name, so we resolve names from the pipeline definition.
+async function fetchStageNames(pipelineId) {
+  const r = await fetch(
+    `https://services.leadconnectorhq.com/opportunities/pipelines?locationId=${encodeURIComponent(LOCATION_ID)}`,
+    { headers: { Authorization: `Bearer ${GHL_TOKEN}`, Version: "2021-07-28", Accept: "application/json" } }
+  );
+  if (!r.ok) throw new Error(`GHL pipelines ${r.status}: ${(await r.text()).slice(0, 300)}`);
+  const data = await r.json();
+  const pipeline = (data.pipelines || []).find((p) => p.id === pipelineId);
+  const map = {};
+  for (const s of (pipeline && pipeline.stages) || []) map[s.id] = s.name;
+  return map;
+}
+
 async function fetchOpportunities(pipelineId) {
   const out = [];
   let url = `https://services.leadconnectorhq.com/opportunities/search` +
@@ -95,6 +110,7 @@ module.exports = async function handler(req, res) {
     let scanned = 0, unmatched = 0;
 
     for (const p of PIPELINES) {
+      const stageNames = await fetchStageNames(p.id);
       const opps = await fetchOpportunities(p.id);
       for (const o of opps) {
         scanned++;
@@ -108,7 +124,9 @@ module.exports = async function handler(req, res) {
                      (email && byEmail.get(email)) || null;
         if (!lead) { unmatched++; continue; }
 
-        const stageName = o.pipelineStageName || o.pipelineStageId || "?";
+        const stageName = o.pipelineStageName ||
+                          stageNames[o.pipelineStageId] ||
+                          o.pipelineStageId || "?";
         const status = o.status || "open";
         const derived = derive(p.key, stageName, status);
         const statusTag = norm(status) && norm(status) !== "open" ? ` (${status})` : "";
