@@ -25,7 +25,8 @@ module.exports = async function handler(req, res) {
     `&order=started_at.desc&limit=1000`;
   const leadsUrl =
     `${SUPABASE_URL}/rest/v1/vpr_leads` +
-    `?select=id,first_name,last_name,source,utm_source,utm_medium,utm_campaign,page_url,created_at,lead_status,ghl_stage,ghl_stage_at,ghl_contact_id,status_override` +
+    `?select=id,first_name,last_name,source,utm_source,utm_medium,utm_campaign,page_url,created_at,lead_status,ghl_stage,ghl_stage_at,ghl_contact_id,status_override,tenant` +
+    `&tenant=eq.ga` +
     `&order=created_at.desc&limit=1000`;
   try {
     const [callsRes, leadsRes] = await Promise.all([

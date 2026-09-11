@@ -426,6 +426,16 @@
     return { key, label, unattributed: false };
   }
 
+  // utm_campaign if present, else the landing page host (www. stripped), else null.
+  function sourceSecondLine(lead) {
+    if (lead.utm_campaign) return lead.utm_campaign;
+    if (lead.page_url) {
+      try { return new URL(lead.page_url).hostname.replace(/^www\./, ""); }
+      catch (e) { return null; }
+    }
+    return null;
+  }
+
   function lastActivityIso(lead) { return lead.ghl_stage_at || lead.created_at || null; }
 
   function formatTime(iso) {
@@ -670,7 +680,8 @@
     const id = String(lead.id);
     const name = [lead.first_name, lead.last_name].filter(Boolean).join(" ") || "—";
     const src = sourceInfo(lead).label;
-    const sourceHtml = `<div class="c-source"><div class="src-line">${escapeHtml(src)}</div>${lead.utm_campaign ? `<div class="src-campaign">${escapeHtml(lead.utm_campaign)}</div>` : ""}</div>`;
+    const src2 = sourceSecondLine(lead);
+    const sourceHtml = `<div class="c-source"><div class="src-line">${escapeHtml(src)}</div>${src2 ? `<div class="src-campaign">${escapeHtml(src2)}</div>` : ""}</div>`;
     const stageHtml = lead.ghl_stage
       ? `<div class="c-stage">${escapeHtml(lead.ghl_stage)}</div>`
       : `<div class="c-stage empty">—</div>`;
