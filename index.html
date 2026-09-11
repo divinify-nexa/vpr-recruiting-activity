@@ -78,227 +78,234 @@
   button.refresh:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   button.refresh:disabled { opacity: .55; cursor: default; box-shadow: none; }
 
-  /* KPIs */
-  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; align-items: stretch; }
-  .stack { display: flex; flex-direction: column; gap: 16px; }
-  .stack > .kpi { flex: 1; }
-  .kpi {
-    position: relative; overflow: hidden;
+  /* Metric cards */
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .mcard {
+    position: relative; overflow: hidden; text-align: left; cursor: pointer;
     background: var(--card-grad), var(--panel);
     border: 1px solid var(--line); border-radius: var(--radius);
     padding: 20px 20px 18px; box-shadow: var(--card-shadow);
     transition: transform .16s ease, border-color .16s ease;
+    font-family: inherit; color: inherit;
   }
-  .kpi:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.12); }
-  .kpi .num {
-    font-size: 42px; font-weight: 800; letter-spacing: -1.4px;
-    font-variant-numeric: tabular-nums; line-height: 1; margin-top: 6px;
+  .mcard:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.12); }
+  .mcard:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .mcard[data-status="new"] { --accent: var(--blue); }
+  .mcard[data-status="working"] { --accent: var(--amber); }
+  .mcard[data-status="recruited"] { --accent: var(--yellow); }
+  .mcard::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 0;
+    background: var(--accent); transition: height .15s ease;
   }
-  .kpi .lab {
-    color: var(--muted); font-size: 11.5px; font-weight: 500;
+  .mcard.active::before { height: 2px; }
+  .mcard .m-num {
+    font-size: 36px; font-weight: 800; letter-spacing: -1.2px;
+    font-variant-numeric: tabular-nums; line-height: 1;
+  }
+  .mcard .m-lab {
+    color: var(--muted); font-size: 11.5px; font-weight: 600;
     text-transform: uppercase; letter-spacing: .07em; margin-top: 12px;
   }
-
-  /* Split (Form leads | Calls) + Scoreboard share a centered, divided layout */
-  .kpi.split, .kpi.score { display: flex; align-items: stretch; padding: 0; }
-  .kpi.split .half, .kpi.score .seg {
-    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 18px 10px; text-align: center;
-  }
-  .vdiv { width: 1px; background: var(--line); align-self: stretch; margin: 16px 0; flex: none; }
-  .kpi.split .num { margin-top: 0; }
-  .kpi.split .half.accent .num {
+  .mcard .m-sub { color: var(--faint); font-size: 12px; margin-top: 3px; }
+  .mcard.recruited { border-color: rgba(255,222,23,.3); }
+  .mcard.recruited .m-num {
+    font-size: 46px;
     background: linear-gradient(180deg, var(--yellow-hi), var(--yellow));
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .kpi.split .lab { margin-top: 10px; }
+  .mcard .m-extra { color: var(--faint); font-size: 11.5px; margin-top: 9px; }
 
-  .kpi.score .seg { position: relative; cursor: pointer; transition: background .15s ease; }
-  .kpi.score .seg:hover { background: rgba(255,255,255,.03); }
-  .kpi.score .seg:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
-  .seg-num { font-size: 30px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; line-height: 1; color: var(--text); transition: color .15s ease; }
-  .seg-lab { color: var(--muted); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; margin-top: 9px; }
-  .seg.active { background: rgba(255,255,255,.04); }
-  .seg.active[data-status="captured"] { color: var(--blue-soft); }
-  .seg.active[data-status="awaiting"] { color: var(--amber); }
-  .seg.active[data-status="recruited"] { color: var(--green); }
-  .seg.active .seg-num { color: currentColor; }
-  .seg.active::before {
-    content: ""; position: absolute; left: 16px; right: 16px; top: 0; height: 2px;
-    background: currentColor; border-radius: 0 0 2px 2px;
-  }
-
-  /* Leads-by-source card */
-  .kpi.source { padding: 18px 20px; }
-  .src-head { display: flex; align-items: center; justify-content: space-between; }
-  .src-title {
-    color: var(--muted); font-size: 11.5px; font-weight: 500;
-    text-transform: uppercase; letter-spacing: .07em;
-  }
-  .src-ico { color: var(--faint); opacity: .55; display: flex; }
-  .src-ico svg { width: 18px; height: 18px; display: block; }
-  .src-list { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
-  .src-list .loading, .src-list .src-empty { padding: 12px 2px; color: var(--faint); font-size: 13px; }
-  .src-row {
-    position: relative; display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; padding: 8px 12px; border-radius: 9px; overflow: hidden;
-    background: rgba(255,255,255,.025); border: 1px solid var(--line-soft);
-  }
-  .src-bar {
-    position: absolute; top: 0; bottom: 0; left: 0;
-    background: linear-gradient(90deg, rgba(74,108,247,.22), rgba(74,108,247,.04));
-    border-right: 1px solid rgba(74,108,247,.25);
-  }
-  .src-row.top .src-bar {
-    background: linear-gradient(90deg, rgba(255,222,23,.18), rgba(255,222,23,.03));
-    border-right-color: rgba(255,222,23,.32);
-  }
-  .src-name {
-    position: relative; font-size: 13.5px; font-weight: 600; letter-spacing: -.1px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  /* Per-source page breakdown (e.g. "4 Benefits · 1 Careers") */
-  .src-split {
-    position: relative; margin-left: auto; flex-shrink: 0;
-    color: var(--faint); font-size: 11px; font-weight: 500;
-    font-variant-numeric: tabular-nums; white-space: nowrap;
-  }
-  .src-count {
-    position: relative; font-size: 16px; font-weight: 800;
-    font-variant-numeric: tabular-nums; letter-spacing: -.3px;
-  }
-  .src-row.top .src-count { color: var(--yellow); }
-
-  /* Panels */
-  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  /* Panels (source card + table card share this shell) */
   .panel {
     background: var(--card-grad), var(--panel);
     border: 1px solid var(--line); border-radius: var(--radius);
-    overflow: hidden; box-shadow: var(--card-shadow);
+    overflow: hidden; box-shadow: var(--card-shadow); margin-bottom: 24px;
   }
   .panel > h2 {
     font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
     color: var(--muted); margin: 0; padding: 17px 20px 15px;
     border-bottom: 1px solid var(--line-soft);
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
   }
   .panel > h2 .count {
-    color: var(--text); font-weight: 600; letter-spacing: 0; font-size: 12px;
+    color: var(--text); font-weight: 600; letter-spacing: 0; font-size: 11.5px;
     background: rgba(255,255,255,.07); border: 1px solid var(--line-soft);
-    padding: 2px 9px; border-radius: 999px; min-width: 24px; text-align: center;
+    padding: 3px 10px; border-radius: 999px; text-transform: none;
   }
-  .list { display: flex; flex-direction: column; }
 
-  /* Shared row layout: name + status on the left, time + source/outcome on the right */
-  .item, .call-head {
-    padding: 14px 20px;
-    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
-    transition: background .15s ease;
+  /* Leads-by-source card */
+  .src-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; padding: 16px 20px 18px; }
+  .src-empty, .loading { padding: 14px 2px; color: var(--faint); font-size: 13px; }
+  .src-row {
+    position: relative; display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 9px; overflow: hidden; cursor: pointer;
+    background: rgba(255,255,255,.025); border: 1px solid var(--line-soft);
+    transition: border-color .15s ease, background .15s ease;
   }
-  .item { border-bottom: 1px solid var(--line-soft); }
-  .item:last-child { border-bottom: none; }
-  .item:hover { background: rgba(255,255,255,.025); }
-
-  .row-main { min-width: 0; }
-  .row-main .who { font-weight: 600; font-size: 14.5px; letter-spacing: -.1px; }
-  .row-right { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; text-align: right; }
-  .row-right .when { color: var(--faint); font-size: 12px; white-space: nowrap; }
-  .row-right .src { color: var(--text); font-size: 13px; font-weight: 600; white-space: nowrap; letter-spacing: -.1px; }
-  .row-right .outcome { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
-  .row-right .outcome.answered { color: var(--green); }
-  .row-right .outcome.missed { color: var(--amber); }
-  .row-right .outcome.failed { color: var(--red); }
-  .row-right .outcome.other { color: var(--muted); }
-
-  /* Landing-page tag on lead rows (Channel × Page) */
-  .page-tag {
-    display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .04em;
-    padding: 2px 8px; border-radius: 999px; border: 1px solid transparent;
-    text-transform: uppercase; white-space: nowrap;
+  .src-row:hover { border-color: rgba(255,255,255,.14); }
+  .src-row.active { border-color: rgba(74,108,247,.55); background: rgba(74,108,247,.08); }
+  .src-bar {
+    position: absolute; top: 0; bottom: 0; left: 0;
+    background: linear-gradient(90deg, rgba(74,108,247,.22), rgba(74,108,247,.04));
+    border-right: 1px solid rgba(74,108,247,.25);
   }
-  .page-tag.benefits { background: rgba(74,108,247,.12); color: var(--blue-soft); border-color: rgba(74,108,247,.28); }
-  .page-tag.careers  { background: rgba(255,222,23,.10); color: var(--yellow); border-color: rgba(255,222,23,.28); }
-  .page-tag.otherpg  { background: rgba(147,156,180,.12); color: var(--muted); border-color: rgba(147,156,180,.22); }
-
-  /* Status picker chip */
-  .status-wrap { position: relative; display: inline-flex; margin-top: 8px; color: var(--faint); }
-  .status-wrap::after {
-    content: ""; position: absolute; right: 9px; top: 50%; width: 6px; height: 6px;
-    border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
-    transform: translateY(-70%) rotate(45deg); pointer-events: none; opacity: .8;
+  .src-name {
+    position: relative; font-size: 13.5px; font-weight: 600; letter-spacing: -.1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: flex; align-items: center; gap: 5px;
   }
-  .status-select {
-    appearance: none; -webkit-appearance: none; font-family: inherit;
-    font-size: 11px; font-weight: 600; letter-spacing: .03em; line-height: 1.4;
-    padding: 3px 22px 3px 10px; border-radius: 999px; cursor: pointer;
-    border: 1px solid transparent; transition: border-color .15s ease, background-color .15s ease;
+  .src-info {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%; font-size: 10px; font-weight: 700;
+    color: var(--faint); border: 1px solid var(--faint); cursor: help; flex-shrink: 0;
   }
-  .status-select:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-  .status-select:disabled { opacity: .5; cursor: default; }
-  .status-select.st-captured { background-color: rgba(74,108,247,.13); color: var(--blue-soft); border-color: rgba(74,108,247,.30); }
-  .status-select.st-awaiting { background-color: rgba(251,191,36,.13); color: var(--amber); border-color: rgba(251,191,36,.30); }
-  .status-select.st-recruited { background-color: rgba(52,211,153,.13); color: var(--green); border-color: rgba(52,211,153,.30); }
-
-  /* Expandable call rows */
-  .call { border-bottom: 1px solid var(--line-soft); }
-  .call:last-child { border-bottom: none; }
-  .call-head { cursor: pointer; user-select: none; }
-  .call-head:hover { background: rgba(255,255,255,.025); }
-  .call-head:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
-  .call.open > .call-head { background: rgba(255,255,255,.03); }
-  .row-end { display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0; }
-  .chev { color: var(--faint); display: flex; margin-top: 1px; transition: transform .2s ease; }
-  .chev svg { width: 16px; height: 16px; display: block; }
-  .call.open .chev { transform: rotate(180deg); color: var(--muted); }
-
-  .call-detail { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .22s ease; }
-  .call.open .call-detail { grid-template-rows: 1fr; }
-  .detail-inner { overflow: hidden; padding: 0 20px; }
-  .call.open .detail-inner { padding: 2px 20px 16px; }
-  .detail-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    padding: 7px 0; border-bottom: 1px solid var(--line-soft);
+  .src-pct {
+    position: relative; margin-left: auto; flex-shrink: 0;
+    color: var(--faint); font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums;
   }
-  .detail-row:last-child { border-bottom: none; }
-  .detail-row .dk { color: var(--faint); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
-  .detail-row .dv { color: var(--text); font-size: 13.5px; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
-
-  .pill {
-    display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .03em;
-    padding: 2.5px 9px; border-radius: 999px; border: 1px solid transparent;
+  .src-count {
+    position: relative; font-size: 15px; font-weight: 800; flex-shrink: 0;
+    font-variant-numeric: tabular-nums; letter-spacing: -.3px; min-width: 22px; text-align: right;
   }
-  .pill.answered { background: rgba(52,211,153,.12); color: var(--green); border-color: rgba(52,211,153,.25); }
-  .pill.missed   { background: rgba(251,191,36,.12); color: var(--amber); border-color: rgba(251,191,36,.25); }
-  .pill.failed   { background: rgba(248,113,113,.12); color: var(--red); border-color: rgba(248,113,113,.25); }
-  .pill.other    { background: rgba(147,156,180,.13); color: var(--muted); border-color: rgba(147,156,180,.22); }
+
+  /* Filter bar */
+  .filterbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(74,108,247,.13); border: 1px solid rgba(74,108,247,.3);
+    color: var(--blue-soft); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 12px; font-weight: 600;
+  }
+  .chip button {
+    background: none; border: none; color: inherit; cursor: pointer;
+    font-size: 14px; line-height: 1; padding: 2px 6px; opacity: .75;
+  }
+  .chip button:hover { opacity: 1; }
+  .clear-all {
+    background: none; border: none; color: var(--muted); font-size: 12px;
+    cursor: pointer; text-decoration: underline; padding: 4px 2px; font-family: inherit;
+  }
+  .clear-all:hover { color: var(--text); }
+  #search {
+    background: rgba(255,255,255,.04); border: 1px solid var(--line); color: var(--text);
+    border-radius: 10px; padding: 8px 12px; font-size: 13px; font-family: inherit;
+    min-width: 210px; flex: 0 1 260px;
+  }
+  #search:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+  #search::placeholder { color: var(--faint); }
+
+  /* Table */
+  .tbl-head, .tbl-row {
+    display: grid; grid-template-columns: 1.3fr 1fr 1.6fr 1.1fr .95fr;
+    gap: 14px; align-items: center; padding: 13px 20px;
+  }
+  .tbl-head {
+    border-bottom: 1px solid var(--line-soft); color: var(--muted);
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+  }
+  .th { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 5px; transition: color .15s ease; }
+  .th:hover { color: var(--text); }
+  .th.active { color: var(--text); }
+  .th .caret { opacity: 0; font-size: 8px; }
+  .th.active .caret { opacity: .9; }
+  .tbl-row { border-bottom: 1px solid var(--line-soft); cursor: pointer; transition: background .15s ease; }
+  .tbl-row:hover { background: rgba(255,255,255,.025); }
+  .tbl-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+  .c-name { font-weight: 600; font-size: 14px; letter-spacing: -.1px; }
+  .c-source { font-size: 13px; color: var(--text); }
+  .c-stage { font-size: 13px; color: var(--text); line-height: 1.35; }
+  .c-stage.empty { color: var(--faint); }
+  .c-activity .when { font-size: 12.5px; }
+  .c-activity .rel { font-size: 11px; color: var(--faint); margin-top: 2px; }
+  .c-status { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  .pill2 {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700;
+    letter-spacing: .03em; padding: 3px 10px; border-radius: 999px; border: 1px solid transparent;
+    text-transform: uppercase;
+  }
+  .pill2.new       { background: rgba(74,108,247,.13);  color: var(--blue-soft); border-color: rgba(74,108,247,.3); }
+  .pill2.working   { background: rgba(251,191,36,.13);  color: var(--amber);     border-color: rgba(251,191,36,.3); }
+  .pill2.recruited { background: rgba(52,211,153,.13);  color: var(--green);     border-color: rgba(52,211,153,.3); }
+  .override-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; }
+  .stale-chip {
+    font-size: 9.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 999px; background: rgba(251,191,36,.14);
+    color: var(--amber); border: 1px solid rgba(251,191,36,.3);
+  }
+
+  /* Detail drawer */
+  .drawer {
+    padding: 18px 20px 22px; border-bottom: 1px solid var(--line-soft);
+    background: rgba(255,255,255,.015);
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 26px;
+  }
+  .drawer h3 {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--muted); margin: 0 0 10px;
+  }
+  .attr-row { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--line-soft); font-size: 12.5px; }
+  .attr-row:last-child { border-bottom: none; }
+  .attr-row .ak { color: var(--faint); white-space: nowrap; }
+  .attr-row .av { color: var(--text); font-weight: 500; text-align: right; word-break: break-word; }
+  .hist-list { display: flex; flex-direction: column; gap: 11px; }
+  .hist-item { padding-left: 12px; border-left: 2px solid var(--line); font-size: 12.5px; }
+  .hist-item .hs { font-weight: 600; }
+  .hist-item .ht { color: var(--faint); font-size: 11px; margin-top: 2px; }
+  .hist-item .ho { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .hist-empty { color: var(--faint); font-size: 13px; }
+  .ov-warn { font-size: 11.5px; color: var(--amber); margin-bottom: 10px; }
+  .ov-link { background: none; border: none; color: var(--blue-soft); font-size: 12.5px; cursor: pointer; padding: 0; text-decoration: underline; font-family: inherit; }
+  .ov-opts { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ov-opt {
+    background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; font-family: inherit;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .ov-opt:hover { border-color: rgba(255,255,255,.2); }
+  .ov-opt.picked { border-color: var(--blue); background: rgba(74,108,247,.16); }
+  .ov-confirm {
+    background: var(--blue); color: #fff; border: none; border-radius: 8px;
+    padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .ov-confirm:disabled { opacity: .4; cursor: default; }
+  .ov-status { font-size: 11px; margin-top: 8px; }
 
   .empty, .error { padding: 30px 20px; color: var(--muted); font-size: 13.5px; }
   .error { color: var(--amber); }
-  .loading { padding: 30px 20px; color: var(--faint); font-size: 13.5px; }
 
   /* Entrance */
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-  .kpi, .panel { animation: rise .5s ease both; }
-  .kpis > .kpi.source{ animation-delay: .03s; }
-  .stack > .kpi:nth-child(1){ animation-delay: .08s; }
-  .stack > .kpi:nth-child(2){ animation-delay: .13s; }
-  .panels .panel:nth-child(1){ animation-delay: .22s; }
-  .panels .panel:nth-child(2){ animation-delay: .27s; }
+  .mcard, .panel { animation: rise .5s ease both; }
+  .metrics .mcard:nth-child(1) { animation-delay: .04s; }
+  .metrics .mcard:nth-child(2) { animation-delay: .08s; }
+  .metrics .mcard:nth-child(3) { animation-delay: .12s; }
+  .panel:nth-of-type(2) { animation-delay: .18s; }
+  .panel:nth-of-type(3) { animation-delay: .22s; }
 
   @media (prefers-reduced-motion: reduce) {
     .dot { animation: none; }
-    .kpi, .panel { animation: none; }
-    .kpi:hover { transform: none; }
-    .call-detail, .chev { transition: none; }
+    .mcard, .panel { animation: none; }
+    .mcard:hover { transform: none; }
+    button.refresh, .mcard, .src-row, .th, .ov-opt { transition: none; }
   }
 
   @media (max-width: 760px) {
     .wrap { padding: 26px 16px 56px; }
-    .kpis { grid-template-columns: 1fr; }
-    .panels { grid-template-columns: 1fr; }
-    .kpi .num, .kpi.split .num { font-size: 34px; }
-    .seg-num { font-size: 26px; }
-    .src-split { display: none; } /* keep source rows readable on narrow screens */
+    .metrics { grid-template-columns: 1fr; }
+    .mcard.recruited .m-num { font-size: 38px; }
+    .mcard .m-num { font-size: 30px; }
+    .src-cols { grid-template-columns: 1fr; }
+    .drawer { grid-template-columns: 1fr; gap: 18px; }
+
+    .tbl-head { display: none; }
+    .tbl-row {
+      grid-template-columns: 1fr; gap: 4px; align-items: start;
+      padding: 14px 16px;
+    }
+    .c-activity { display: none; }
+    .c-name { font-size: 14.5px; }
+    .c-source { color: var(--muted); }
   }
 </style>
 </head>
@@ -309,7 +316,7 @@
         <span class="dot" aria-hidden="true"></span>
         <div>
           <h1>VPR Recruiting Activity</h1>
-          <div class="sub">Calls &amp; form leads from marketing — all-time</div>
+          <div class="sub">Marketing-attributed leads</div>
         </div>
       </div>
       <div class="right">
@@ -318,66 +325,71 @@
       </div>
     </header>
 
-    <section class="kpis" id="kpis">
-      <div class="kpi source">
-        <div class="src-head">
-          <span class="src-title">Leads by source</span>
-          <span class="src-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="10"/></svg></span>
-        </div>
-        <div class="src-list" id="src-list"><div class="loading">Loading…</div></div>
-      </div>
-
-      <div class="stack">
-        <div class="kpi split">
-          <div class="half accent">
-            <div class="num" id="k-leads">—</div>
-            <div class="lab">Form leads</div>
-          </div>
-          <div class="vdiv"></div>
-          <div class="half">
-            <div class="num" id="k-calls">—</div>
-            <div class="lab">Calls</div>
-          </div>
-        </div>
-
-        <div class="kpi score" id="score">
-          <div class="seg" data-status="captured" role="button" tabindex="0" title="Filter by Captured">
-            <div class="seg-num" id="sc-captured">0</div>
-            <div class="seg-lab">Captured</div>
-          </div>
-          <div class="vdiv"></div>
-          <div class="seg" data-status="awaiting" role="button" tabindex="0" title="Filter by Awaiting">
-            <div class="seg-num" id="sc-awaiting">0</div>
-            <div class="seg-lab">Awaiting</div>
-          </div>
-          <div class="vdiv"></div>
-          <div class="seg" data-status="recruited" role="button" tabindex="0" title="Filter by Recruited">
-            <div class="seg-num" id="sc-recruited">0</div>
-            <div class="seg-lab">Recruited</div>
-          </div>
-        </div>
-      </div>
+    <section class="metrics" id="metrics">
+      <button type="button" class="mcard" data-status="new">
+        <div class="m-num" id="m-new">—</div>
+        <div class="m-lab">New</div>
+        <div class="m-sub">Not yet in a pipeline</div>
+      </button>
+      <button type="button" class="mcard" data-status="working">
+        <div class="m-num" id="m-working">—</div>
+        <div class="m-lab">Working</div>
+        <div class="m-sub">Active in GHL</div>
+      </button>
+      <button type="button" class="mcard recruited" data-status="recruited">
+        <div class="m-num" id="m-recruited">—</div>
+        <div class="m-lab">Recruited</div>
+        <div class="m-sub">Won in onboarding</div>
+        <div class="m-extra" id="m-extra" hidden></div>
+      </button>
     </section>
 
-    <div class="panels">
-      <div class="panel">
-        <h2>Calls <span class="count" id="calls-count"></span></h2>
-        <div class="list" id="calls"><div class="loading">Loading…</div></div>
-      </div>
-      <div class="panel">
-        <h2>Form leads <span class="count" id="leads-count"></span></h2>
-        <div class="list" id="leads"><div class="loading">Loading…</div></div>
-      </div>
+    <section class="panel">
+      <h2>Leads by source <span class="count" id="src-total">—</span></h2>
+      <div class="src-cols" id="src-list"><div class="loading">Loading…</div></div>
+    </section>
+
+    <div class="filterbar" id="filterbar">
+      <div class="chips" id="chips"></div>
+      <button type="button" class="clear-all" id="clear-all" hidden>Clear all</button>
+      <input type="search" id="search" placeholder="Search leads…" aria-label="Search leads by name" />
     </div>
+
+    <section class="panel">
+      <h2>Leads <span class="count" id="tbl-count">—</span></h2>
+      <div class="tbl">
+        <div class="tbl-head" role="row">
+          <div class="th" data-key="name" role="columnheader">Name<span class="caret">▲</span></div>
+          <div class="th" data-key="source" role="columnheader">Source<span class="caret">▲</span></div>
+          <div class="th" data-key="stage" role="columnheader">Stage<span class="caret">▲</span></div>
+          <div class="th" data-key="activity" role="columnheader">Last activity<span class="caret">▼</span></div>
+          <div class="th" data-key="status" role="columnheader">Status<span class="caret">▲</span></div>
+        </div>
+        <div class="tbl-body" id="tbl-body"><div class="loading">Loading…</div></div>
+      </div>
+    </section>
   </div>
 
 <script>
   const $ = (id) => document.getElementById(id);
+  const STATUSES = ["new", "working", "recruited"];
 
-  const STATUSES = ["captured", "awaiting", "recruited"];
-  const state = { calls: [], leads: [] };   // latest data from /api/data
-  let activeFilter = null;                   // null | "captured" | "awaiting" | "recruited"
-  const openCalls = new Set();               // remembers which call drawers are open across refreshes
+  const state = { leads: [] };          // latest data from /api/data
+  let statusFilter = null;              // null | "new" | "working" | "recruited"
+  let sourceFilter = null;              // null | normalized utm_source key
+  let searchText = "";
+  let sortKey = "activity";
+  let sortDir = "desc";
+  const openLeadIds = new Set();        // ids with an open detail drawer, survives refresh
+  const historyCache = new Map();       // ghl_contact_id -> { status, events }
+  const overrideUI = new Map();         // lead id -> { open, picked, saving, error }
+  let unattributedSummary = null;       // { unattributed_recruits, since }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
 
   function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
@@ -388,24 +400,20 @@
 
   function normStatus(s) {
     s = (s || "").toLowerCase().trim();
-    return STATUSES.includes(s) ? s : "captured";
+    return STATUSES.includes(s) ? s : "new";
   }
 
-  function formatPhone(raw) {
-    if (!raw) return "";
-    const d = String(raw).replace(/\D/g, "");
-    const ten = d.length === 11 && d.startsWith("1") ? d.slice(1) : d;
-    if (ten.length === 10) return `(${ten.slice(0,3)}) ${ten.slice(3,6)}-${ten.slice(6)}`;
-    return String(raw);
+  // Groups null / "" / whitespace-only utm_source into one "Unattributed" bucket.
+  // Case-insensitive grouping key; display label is Title Case with a trailing ".com" stripped.
+  function sourceInfo(lead) {
+    const raw = (lead.utm_source || "").trim();
+    if (!raw) return { key: "__unattributed__", label: "Unattributed", unattributed: true };
+    const key = raw.toLowerCase();
+    const base = key.endsWith(".com") ? key.slice(0, -4) : key;
+    return { key, label: titleCase(base), unattributed: false };
   }
 
-  function formatDuration(sec) {
-    const s = Number(sec) || 0;
-    if (s <= 0) return "—";
-    const m = Math.floor(s / 60);
-    const r = s % 60;
-    return m > 0 ? `${m}m ${r}s` : `${r}s`;
-  }
+  function lastActivityIso(lead) { return lead.ghl_stage_at || lead.created_at || null; }
 
   function formatTime(iso) {
     if (!iso) return "";
@@ -416,288 +424,422 @@
     });
   }
 
-  // completed = the call connected. Everything else = didn't connect.
-  function callStatus(status) {
-    switch ((status || "").toLowerCase()) {
-      case "completed": return { cls: "answered", label: "Answered" };
-      case "no-answer": return { cls: "missed",   label: "Missed" };
-      case "busy":      return { cls: "missed",   label: "Busy" };
-      case "canceled":  return { cls: "missed",   label: "Canceled" };
-      case "failed":    return { cls: "failed",   label: "Failed" };
-      case "initiated": return { cls: "other",    label: "In progress" };
-      default:          return { cls: "other",    label: status || "—" };
-    }
+  function formatSinceDate(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
 
-  // Marketing source (channel) = utm_source only. The `source` column varies by
-  // page (hard-coded "email_campaign" on vprbenefits, domain on vprcareers), so
-  // it is ignored for channel purposes. Blank utm_source = "Direct".
-  function leadSource(lead) {
-    const s = (lead.utm_source || "").trim();
-    return s ? titleCase(s) : "Direct";
+  function relativeTime(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    const mins = Math.round((Date.now() - d.getTime()) / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.round(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.round(hrs / 24);
+    return `${days}d ago`;
   }
 
-  // Landing page = derived from page_url, which every lead row has (works
-  // retroactively on historical leads). Channel × Page: leadSource() answers
-  // "where did they come FROM", leadPage() answers "where did they CONVERT".
-  function leadPage(lead) {
-    const u = (lead.page_url || "").toLowerCase();
-    if (u.includes("vprbenefits")) return { key: "benefits", label: "Benefits" };
-    if (u.includes("vprcareers"))  return { key: "careers",  label: "Careers" };
-    if (!u) return null;
+  function isStale(lead) {
+    if (normStatus(lead.lead_status) !== "working") return false;
+    const iso = lastActivityIso(lead);
+    if (!iso) return false;
+    const d = new Date(iso);
+    if (isNaN(d)) return false;
+    return (Date.now() - d.getTime()) / 86400000 >= 14;
+  }
+
+  function hostPath(url) {
+    if (!url) return "—";
     try {
-      const h = new URL(lead.page_url).hostname.replace(/^www\./, "");
-      return h ? { key: "otherpg", label: h } : null;
-    } catch (e) { return null; }
+      const u = new URL(url);
+      return u.hostname.replace(/^www\./, "") + u.pathname;
+    } catch (e) { return url; }
   }
 
-  // Stable key per call so an open drawer survives the 60s auto-refresh.
-  function callKey(c) {
-    return c.call_sid || `${c.from_number || ""}|${c.started_at || ""}`;
-  }
-
-  // Pipeline counts across BOTH tables (always all-time, never filtered).
   function statusCounts() {
-    const c = { captured: 0, awaiting: 0, recruited: 0 };
+    const c = { new: 0, working: 0, recruited: 0 };
     state.leads.forEach((l) => { c[normStatus(l.lead_status)]++; });
-    state.calls.forEach((x) => { c[normStatus(x.lead_status)]++; });
     return c;
   }
 
-  // The Captured/Awaiting/Recruited picker for a row.
-  function statusSelect(kind, id, current) {
-    const cur = normStatus(current);
-    const opts = STATUSES.map((s) =>
-      `<option value="${s}"${s === cur ? " selected" : ""}>${cap(s)}</option>`
-    ).join("");
-    const dis = id ? "" : " disabled";
-    return `<span class="status-wrap"><select class="status-select st-${cur}" data-kind="${kind}" data-id="${escapeHtml(id)}" data-status="${cur}" aria-label="Recruiting status"${dis}>${opts}</select></span>`;
-  }
-
-  function emptyMsg(noun) {
-    return activeFilter ? `No ${cap(activeFilter)} ${noun}.` : `No ${noun} yet.`;
-  }
-
-  // Leads grouped by channel, biggest first, with a proportional bar and a
-  // per-channel landing-page split (e.g. "4 Benefits · 1 Careers"). Always all-time.
-  function renderSources(leads) {
-    const el = $("src-list");
-    if (!leads.length) { el.innerHTML = '<div class="src-empty">No leads yet.</div>'; return; }
-    const counts = {}; // channel -> { n, pages: { label: count } }
-    leads.forEach((l) => {
-      const s = leadSource(l);
-      if (!counts[s]) counts[s] = { n: 0, pages: {} };
-      counts[s].n++;
-      const p = leadPage(l);
-      if (p) counts[s].pages[p.label] = (counts[s].pages[p.label] || 0) + 1;
+  // Always all-time (unfiltered) — the source card itself is a filter control.
+  function groupBySource() {
+    const map = new Map(); // key -> { label, n, unattributed }
+    state.leads.forEach((l) => {
+      const info = sourceInfo(l);
+      if (!map.has(info.key)) map.set(info.key, { label: info.label, n: 0, unattributed: info.unattributed });
+      map.get(info.key).n++;
     });
-    const rows = Object.entries(counts).sort((a, b) => b[1].n - a[1].n);
+    return map;
+  }
+
+  function filteredLeads() {
+    let list = state.leads;
+    if (statusFilter) list = list.filter((l) => normStatus(l.lead_status) === statusFilter);
+    if (sourceFilter) list = list.filter((l) => sourceInfo(l).key === sourceFilter);
+    if (searchText.trim()) {
+      const q = searchText.trim().toLowerCase();
+      list = list.filter((l) => {
+        const name = [l.first_name, l.last_name].filter(Boolean).join(" ").toLowerCase();
+        return name.includes(q);
+      });
+    }
+    return list;
+  }
+
+  function sortLeads(list) {
+    const dir = sortDir === "asc" ? 1 : -1;
+    const arr = list.slice();
+    arr.sort((a, b) => {
+      let av, bv;
+      switch (sortKey) {
+        case "name":
+          av = [a.first_name, a.last_name].filter(Boolean).join(" ").toLowerCase();
+          bv = [b.first_name, b.last_name].filter(Boolean).join(" ").toLowerCase();
+          break;
+        case "source":
+          av = sourceInfo(a).label.toLowerCase();
+          bv = sourceInfo(b).label.toLowerCase();
+          break;
+        case "stage":
+          av = (a.ghl_stage || "").toLowerCase();
+          bv = (b.ghl_stage || "").toLowerCase();
+          break;
+        case "status":
+          av = normStatus(a.lead_status);
+          bv = normStatus(b.lead_status);
+          break;
+        case "activity":
+        default:
+          av = lastActivityIso(a) ? new Date(lastActivityIso(a)).getTime() : 0;
+          bv = lastActivityIso(b) ? new Date(lastActivityIso(b)).getTime() : 0;
+          break;
+      }
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+    return arr;
+  }
+
+  // --- Rendering ---
+
+  function renderMetrics() {
+    const counts = statusCounts();
+    $("m-new").textContent = counts.new;
+    $("m-working").textContent = counts.working;
+    $("m-recruited").textContent = counts.recruited;
+    document.querySelectorAll(".mcard").forEach((c) =>
+      c.classList.toggle("active", c.dataset.status === statusFilter)
+    );
+    const extra = $("m-extra");
+    if (unattributedSummary && unattributedSummary.unattributed_recruits > 0) {
+      const since = unattributedSummary.since ? formatSinceDate(unattributedSummary.since) : "";
+      extra.textContent = `+${unattributedSummary.unattributed_recruits} other recruits not marketing-attributed${since ? ` (since ${since})` : ""}`;
+      extra.hidden = false;
+    } else {
+      extra.hidden = true;
+    }
+  }
+
+  function renderSources() {
+    const el = $("src-list");
+    const leads = state.leads;
+    $("src-total").textContent = leads.length ? leads.length : "0";
+    if (!leads.length) { el.innerHTML = '<div class="src-empty">No leads yet.</div>'; return; }
+    const map = groupBySource();
+    const rows = [...map.entries()].sort((a, b) => b[1].n - a[1].n);
     const max = rows[0][1].n || 1;
-    el.innerHTML = rows.map(([name, data], i) => {
+    const total = leads.length;
+    el.innerHTML = rows.map(([key, data]) => {
       const pct = Math.max(6, Math.round((data.n / max) * 100));
-      const pageEntries = Object.entries(data.pages).sort((a, b) => b[1] - a[1]);
-      // Only show the split when it adds information (more than one page in play
-      // for this channel); a single-page channel just repeats the total.
-      const split = pageEntries.length > 1
-        ? `<span class="src-split">${pageEntries.map(([pl, pn]) => `${pn} ${escapeHtml(pl)}`).join(" · ")}</span>`
+      const sharePct = Math.round((data.n / total) * 100);
+      const active = sourceFilter === key;
+      const info = data.unattributed
+        ? `<span class="src-info" tabindex="0" title="No UTM captured. May include ad-driven visitors who typed the URL directly.">i</span>`
         : "";
       return `
-        <div class="src-row${i === 0 ? " top" : ""}">
+        <div class="src-row${active ? " active" : ""}" data-key="${escapeHtml(key)}" role="button" tabindex="0">
           <span class="src-bar" style="width:${pct}%"></span>
-          <span class="src-name">${escapeHtml(name)}</span>
-          ${split}
+          <span class="src-name">${escapeHtml(data.label)}${info}</span>
+          <span class="src-pct">${sharePct}%</span>
           <span class="src-count">${data.n}</span>
         </div>`;
     }).join("");
   }
 
-  // Detail rows shown when a call is expanded. Optional fields appear only if present.
-  function callDetail(c) {
-    const st = callStatus(c.status);
-    const rows = [["Status", st.label]];
-    rows.push(["Talk time", st.cls === "answered" ? formatDuration(c.duration_seconds) : "Didn't connect"]);
-    const phone = formatPhone(c.from_number);
-    if (phone) rows.push(["Phone", phone]);
-    const loc = [titleCase(c.from_city), c.from_state].filter(Boolean).join(", ");
-    if (loc) rows.push(["Location", loc]);
-    if (c.started_at) rows.push(["Started", formatTime(c.started_at)]);
-    return rows.map(([k, v]) =>
-      `<div class="detail-row"><span class="dk">${k}</span><span class="dv">${escapeHtml(String(v))}</span></div>`
+  function activeFiltersList() {
+    const chips = [];
+    if (statusFilter) chips.push({ type: "status", label: cap(statusFilter) });
+    if (sourceFilter) {
+      const map = groupBySource();
+      const label = map.has(sourceFilter) ? map.get(sourceFilter).label : sourceFilter;
+      chips.push({ type: "source", label });
+    }
+    return chips;
+  }
+
+  function renderChips() {
+    const chips = activeFiltersList();
+    $("chips").innerHTML = chips.map((c) =>
+      `<span class="chip">${escapeHtml(c.label)}<button type="button" data-clear="${c.type}" aria-label="Remove filter">×</button></span>`
     ).join("");
+    $("clear-all").hidden = chips.length === 0;
   }
 
-  function renderCalls(calls) {
-    const el = $("calls");
-    $("calls-count").textContent = calls.length ? calls.length : "0";
-    if (!calls.length) { el.innerHTML = `<div class="empty">${emptyMsg("calls")}</div>`; return; }
-    el.innerHTML = calls.map((c, i) => {
-      const name = c.from_caller_name && c.from_caller_name.trim()
-        ? c.from_caller_name : (formatPhone(c.from_number) || "Unknown caller");
-      const st = callStatus(c.status);
-      let outcome = st.label;
-      if (st.cls === "answered") outcome += " · " + formatDuration(c.duration_seconds);
-      const key = callKey(c);
-      const id = c.call_sid || "";
+  function renderHistory(lead) {
+    const cid = lead.ghl_contact_id;
+    if (!cid) return `<div class="hist-empty">No GHL history yet.</div>`;
+    const entry = historyCache.get(cid);
+    if (!entry || entry.status === "loading") return `<div class="loading">Loading…</div>`;
+    if (entry.status === "error") return `<div class="error">Couldn't load history.</div>`;
+    if (!entry.events.length) return `<div class="hist-empty">No GHL history yet.</div>`;
+    return `<div class="hist-list">${entry.events.map((ev) => {
+      const showOpp = ev.opp_status && ev.opp_status.toLowerCase() !== "open";
       return `
-        <div class="call" data-key="${escapeHtml(key)}">
-          <div class="call-head" role="button" tabindex="0" aria-expanded="false" aria-controls="cd-${i}">
-            <div class="row-main">
-              <div class="who">${escapeHtml(name)}</div>
-              ${statusSelect("call", id, c.lead_status)}
-            </div>
-            <div class="row-end">
-              <div class="row-right">
-                <div class="when">${formatTime(c.started_at)}</div>
-                <div class="outcome ${st.cls}">${escapeHtml(outcome)}</div>
-              </div>
-              <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-            </div>
-          </div>
-          <div class="call-detail" id="cd-${i}"><div class="detail-inner">${callDetail(c)}</div></div>
+        <div class="hist-item">
+          <div class="hs">${escapeHtml(ev.stage_name || "—")}</div>
+          <div class="ht">${escapeHtml(formatTime(ev.received_at))}</div>
+          ${showOpp ? `<div class="ho">${escapeHtml(ev.opp_status)}</div>` : ""}
         </div>`;
-    }).join("");
+    }).join("")}</div>`;
+  }
 
-    el.querySelectorAll(".call").forEach((node) => {
-      if (openCalls.has(node.dataset.key)) {
-        node.classList.add("open");
-        node.querySelector(".call-head").setAttribute("aria-expanded", "true");
-      }
+  function renderOverride(lead) {
+    const id = String(lead.id);
+    const ui = overrideUI.get(id) || { open: false, picked: null, saving: false, error: null };
+    if (!ui.open) {
+      return `<button type="button" class="ov-link" data-ov-open="${escapeHtml(id)}">Set status manually</button>`;
+    }
+    const opts = STATUSES.map((s) =>
+      `<button type="button" class="ov-opt${ui.picked === s ? " picked" : ""}" data-ov-pick="${s}">${cap(s)}</button>`
+    ).join("");
+    const confirmDisabled = !ui.picked || ui.saving;
+    const errorHtml = ui.error ? `<div class="ov-status" style="color:var(--red)">${escapeHtml(ui.error)}</div>` : "";
+    return `
+      <div class="ov-warn">This stops GHL from updating this lead.</div>
+      <div class="ov-opts">${opts}</div>
+      <button type="button" class="ov-confirm" data-ov-confirm="${escapeHtml(id)}"${confirmDisabled ? " disabled" : ""}>${ui.saving ? "Saving…" : "Confirm override"}</button>
+      ${errorHtml}`;
+  }
+
+  function renderDrawer(lead) {
+    const id = String(lead.id);
+    const src = sourceInfo(lead).label;
+    const medium = lead.utm_medium ? escapeHtml(lead.utm_medium) : "—";
+    const campaign = lead.utm_campaign ? escapeHtml(lead.utm_campaign) : "—";
+    const landing = lead.page_url ? escapeHtml(hostPath(lead.page_url)) : "—";
+    const firstSeen = lead.created_at ? escapeHtml(formatTime(lead.created_at)) : "—";
+    return `
+      <div class="drawer" data-drawer-for="${escapeHtml(id)}">
+        <div>
+          <h3>Attribution</h3>
+          <div class="attr-row"><span class="ak">Source</span><span class="av">${escapeHtml(src)}</span></div>
+          <div class="attr-row"><span class="ak">Medium</span><span class="av">${medium}</span></div>
+          <div class="attr-row"><span class="ak">Campaign</span><span class="av">${campaign}</span></div>
+          <div class="attr-row"><span class="ak">Landing page</span><span class="av">${landing}</span></div>
+          <div class="attr-row"><span class="ak">First seen</span><span class="av">${firstSeen}</span></div>
+        </div>
+        <div>
+          <h3>Stage history</h3>
+          ${renderHistory(lead)}
+        </div>
+        <div>
+          <h3>Override</h3>
+          ${renderOverride(lead)}
+        </div>
+      </div>`;
+  }
+
+  function renderLeadRow(lead) {
+    const id = String(lead.id);
+    const name = [lead.first_name, lead.last_name].filter(Boolean).join(" ") || "—";
+    const src = sourceInfo(lead).label;
+    const stageHtml = lead.ghl_stage
+      ? `<div class="c-stage">${escapeHtml(lead.ghl_stage)}</div>`
+      : `<div class="c-stage empty">Not in a pipeline</div>`;
+    const activityIso = lastActivityIso(lead);
+    const activityHtml = activityIso
+      ? `<div class="c-activity"><div class="when">${escapeHtml(formatTime(activityIso))}</div><div class="rel">${escapeHtml(relativeTime(activityIso))}</div></div>`
+      : `<div class="c-activity"><div class="when">—</div></div>`;
+    const status = normStatus(lead.lead_status);
+    const overrideDot = lead.status_override
+      ? `<span class="override-dot" title="Manually set - GHL sync will not change this row"></span>`
+      : "";
+    const staleChip = isStale(lead) ? `<span class="stale-chip">Stale</span>` : "";
+    const statusHtml = `<div class="c-status"><span class="pill2 ${status}">${overrideDot}${cap(status)}</span>${staleChip}</div>`;
+    const isOpen = openLeadIds.has(id);
+
+    const row = `
+      <div class="tbl-row" data-id="${escapeHtml(id)}" role="row" tabindex="0" aria-expanded="${isOpen}">
+        <div class="c-name">${escapeHtml(name)}</div>
+        <div class="c-source">${escapeHtml(src)}</div>
+        ${stageHtml}
+        ${activityHtml}
+        ${statusHtml}
+      </div>`;
+
+    return row + (isOpen ? renderDrawer(lead) : "");
+  }
+
+  function renderTable() {
+    const body = $("tbl-body");
+    const all = state.leads;
+    const list = sortLeads(filteredLeads());
+
+    $("tbl-count").textContent = `Showing ${list.length} of ${all.length}`;
+
+    document.querySelectorAll(".th").forEach((th) => {
+      const active = th.dataset.key === sortKey;
+      th.classList.toggle("active", active);
+      const caret = th.querySelector(".caret");
+      if (caret && active) caret.textContent = sortDir === "asc" ? "▲" : "▼";
     });
+
+    if (!all.length) { body.innerHTML = `<div class="empty">No leads yet.</div>`; return; }
+    if (!list.length) { body.innerHTML = `<div class="empty">No leads match the current filters.</div>`; return; }
+
+    body.innerHTML = list.map(renderLeadRow).join("");
   }
 
-  function renderLeads(leads) {
-    const el = $("leads");
-    $("leads-count").textContent = leads.length ? leads.length : "0";
-    if (!leads.length) { el.innerHTML = `<div class="empty">${emptyMsg("form leads")}</div>`; return; }
-    el.innerHTML = leads.map((l) => {
-      const name = [l.first_name, l.last_name].filter(Boolean).join(" ") || "—";
-      const id = l.id || "";
-      const p = leadPage(l);
-      const pageTag = p ? `<span class="page-tag ${p.key}">${escapeHtml(p.label)}</span>` : "";
-      return `
-        <div class="item">
-          <div class="row-main">
-            <div class="who">${escapeHtml(name)}</div>
-            ${statusSelect("lead", id, l.lead_status)}
-          </div>
-          <div class="row-right">
-            <div class="when">${formatTime(l.created_at)}</div>
-            <div class="src">${escapeHtml(leadSource(l))}</div>
-            ${pageTag}
-          </div>
-        </div>`;
-    }).join("");
-  }
-
-  // Single render pass: KPI totals, scoreboard, active highlight, filtered lists.
   function render() {
-    $("k-leads").textContent = state.leads.length;
-    $("k-calls").textContent = state.calls.length;
-
-    const counts = statusCounts();
-    STATUSES.forEach((s) => { $("sc-" + s).textContent = counts[s]; });
-
-    document.querySelectorAll(".seg").forEach((seg) =>
-      seg.classList.toggle("active", seg.dataset.status === activeFilter)
-    );
-
-    const fl = activeFilter ? state.leads.filter((l) => normStatus(l.lead_status) === activeFilter) : state.leads;
-    const fc = activeFilter ? state.calls.filter((c) => normStatus(c.lead_status) === activeFilter) : state.calls;
-
-    renderSources(state.leads);
-    renderCalls(fc);
-    renderLeads(fl);
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) => (
-      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
-    ));
+    renderMetrics();
+    renderSources();
+    renderChips();
+    renderTable();
   }
 
   function showError(msg) {
-    $("calls").innerHTML = `<div class="error">${escapeHtml(msg)}</div>`;
-    $("leads").innerHTML = "";
+    $("tbl-body").innerHTML = `<div class="error">${escapeHtml(msg)}</div>`;
     $("src-list").innerHTML = `<div class="src-empty">—</div>`;
   }
 
-  function noteSaveError() {
-    const u = $("updated");
-    u.textContent = "Couldn't save status — try again";
-    u.style.color = "var(--amber)";
-    setTimeout(() => { u.style.color = ""; }, 4000);
-  }
+  // --- Filter / sort / drawer / override actions ---
 
-  function toggleCall(head) {
-    const call = head.closest(".call");
-    if (!call) return;
-    const open = call.classList.toggle("open");
-    head.setAttribute("aria-expanded", open ? "true" : "false");
-    if (open) openCalls.add(call.dataset.key); else openCalls.delete(call.dataset.key);
-  }
-
-  // Update the in-memory row, then save to Supabase. Optimistic with rollback on failure.
-  function applyStatusLocally(kind, id, status) {
-    const arr = kind === "lead" ? state.leads : state.calls;
-    const key = kind === "lead" ? "id" : "call_sid";
-    const row = arr.find((r) => String(r[key]) === String(id));
-    if (row) row.lead_status = status;
-  }
-
-  async function changeStatus(kind, id, status, prev) {
-    applyStatusLocally(kind, id, status);
+  function toggleStatusFilter(s) { statusFilter = statusFilter === s ? null : s; render(); }
+  function toggleSourceFilter(key) { sourceFilter = sourceFilter === key ? null : key; render(); }
+  function clearFilter(type) {
+    if (type === "status") statusFilter = null;
+    if (type === "source") sourceFilter = null;
     render();
-    try {
-      const r = await fetch("/api/set-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, id, status }),
+  }
+  function clearAllFilters() { statusFilter = null; sourceFilter = null; render(); }
+
+  function toggleSort(key) {
+    if (sortKey === key) { sortDir = sortDir === "asc" ? "desc" : "asc"; }
+    else { sortKey = key; sortDir = key === "activity" ? "desc" : "asc"; }
+    render();
+  }
+
+  function ensureHistory(contactId) {
+    if (historyCache.has(contactId)) return;
+    historyCache.set(contactId, { status: "loading", events: [] });
+    fetch(`/api/lead-history?contact_id=${encodeURIComponent(contactId)}`)
+      .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) throw new Error(data.error || "failed");
+        historyCache.set(contactId, { status: "loaded", events: data.events || [] });
+        render();
+      })
+      .catch(() => {
+        historyCache.set(contactId, { status: "error", events: [] });
+        render();
       });
-      if (!r.ok) throw new Error("save failed");
-    } catch (e) {
-      applyStatusLocally(kind, id, prev); // roll back
-      render();
-      noteSaveError();
-    }
   }
 
-  // --- Event wiring (bound once; containers persist across refreshes) ---
-
-  // Status picker changes (works for both lists via delegation).
-  document.addEventListener("change", (e) => {
-    const sel = e.target.closest(".status-select");
-    if (!sel) return;
-    changeStatus(sel.dataset.kind, sel.dataset.id, sel.value, sel.dataset.status);
-  });
-
-  // Scoreboard filter clicks.
-  function activateSeg(seg) {
-    const s = seg.dataset.status;
-    activeFilter = activeFilter === s ? null : s;
+  function toggleDrawer(id) {
+    id = String(id);
+    if (openLeadIds.has(id)) { openLeadIds.delete(id); render(); return; }
+    openLeadIds.add(id);
+    const lead = state.leads.find((l) => String(l.id) === id);
+    if (lead && lead.ghl_contact_id) ensureHistory(lead.ghl_contact_id);
     render();
   }
-  $("score").addEventListener("click", (e) => {
-    const seg = e.target.closest(".seg");
-    if (seg) activateSeg(seg);
-  });
-  $("score").addEventListener("keydown", (e) => {
-    if (e.key !== "Enter" && e.key !== " ") return;
-    const seg = e.target.closest(".seg");
-    if (seg) { e.preventDefault(); activateSeg(seg); }
+
+  function openOverride(id) {
+    overrideUI.set(String(id), { open: true, picked: null, saving: false, error: null });
+    render();
+  }
+  function pickOverride(id, status) {
+    id = String(id);
+    const ui = overrideUI.get(id) || { open: true, picked: null, saving: false, error: null };
+    ui.picked = status; ui.open = true;
+    overrideUI.set(id, ui);
+    render();
+  }
+  function confirmOverride(id) {
+    id = String(id);
+    const ui = overrideUI.get(id);
+    if (!ui || !ui.picked || ui.saving) return;
+    ui.saving = true; ui.error = null;
+    overrideUI.set(id, ui);
+    render();
+    const status = ui.picked;
+    fetch("/api/set-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "lead", id, status }),
+    })
+      .then((r) => { if (!r.ok) throw new Error("save failed"); })
+      .then(() => {
+        const lead = state.leads.find((l) => String(l.id) === id);
+        if (lead) { lead.lead_status = status; lead.status_override = true; }
+        overrideUI.set(id, { open: false, picked: null, saving: false, error: null });
+        render();
+      })
+      .catch(() => {
+        overrideUI.set(id, { open: true, picked: status, saving: false, error: "Couldn't save — try again." });
+        render();
+      });
+  }
+
+  // --- Event wiring (delegated; containers persist across refreshes) ---
+
+  document.addEventListener("click", (e) => {
+    const mcard = e.target.closest(".mcard");
+    if (mcard) { toggleStatusFilter(mcard.dataset.status); return; }
+
+    const srow = e.target.closest(".src-row");
+    if (srow) { toggleSourceFilter(srow.dataset.key); return; }
+
+    const clearBtn = e.target.closest("[data-clear]");
+    if (clearBtn) { clearFilter(clearBtn.dataset.clear); return; }
+
+    if (e.target.closest("#clear-all")) { clearAllFilters(); return; }
+
+    const ovOpen = e.target.closest("[data-ov-open]");
+    if (ovOpen) { openOverride(ovOpen.dataset.ovOpen); return; }
+
+    const ovPick = e.target.closest("[data-ov-pick]");
+    if (ovPick) {
+      const drawer = ovPick.closest(".drawer");
+      if (drawer) pickOverride(drawer.dataset.drawerFor, ovPick.dataset.ovPick);
+      return;
+    }
+
+    const ovConfirm = e.target.closest("[data-ov-confirm]");
+    if (ovConfirm) { confirmOverride(ovConfirm.dataset.ovConfirm); return; }
+
+    const trow = e.target.closest(".tbl-row");
+    if (trow) { toggleDrawer(trow.dataset.id); return; }
+
+    const th = e.target.closest(".th");
+    if (th) { toggleSort(th.dataset.key); return; }
   });
 
-  // Call drawer expand/collapse — but never when interacting with the status picker.
-  $("calls").addEventListener("click", (e) => {
-    if (e.target.closest(".status-wrap")) return;
-    const head = e.target.closest(".call-head");
-    if (head) toggleCall(head);
-  });
-  $("calls").addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
-    if (e.target.closest(".status-wrap")) return;
-    const head = e.target.closest(".call-head");
-    if (head && e.target === head) { e.preventDefault(); toggleCall(head); }
+    const trow = e.target.closest(".tbl-row");
+    if (trow && e.target === trow) { e.preventDefault(); toggleDrawer(trow.dataset.id); return; }
+    const srow = e.target.closest(".src-row");
+    if (srow && e.target === srow) { e.preventDefault(); toggleSourceFilter(srow.dataset.key); return; }
   });
+
+  $("search").addEventListener("input", (e) => { searchText = e.target.value; render(); });
 
   async function load() {
     const btn = $("refresh");
@@ -706,8 +848,11 @@
       const r = await fetch("/api/data", { cache: "no-store" });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Request failed");
-      state.calls = data.calls || [];
       state.leads = data.leads || [];
+      try {
+        const sr = await fetch("/api/lead-history?summary=1", { cache: "no-store" });
+        if (sr.ok) unattributedSummary = await sr.json();
+      } catch (e) { /* summary is non-critical */ }
       render();
       $("updated").textContent = "Updated " + new Date().toLocaleTimeString("en-US",
         { hour: "numeric", minute: "2-digit" });
