@@ -12,25 +12,20 @@ const ALLOWED_LOCATIONS = (process.env.GHL_ALLOWED_LOCATIONS || "")
 
 // ---------------------------------------------------------------------------
 // MAPPING — the only place status logic lives. Edit here, nowhere else.
+// Buckets: new (not in a pipeline) | working (open in either pipeline) | recruited (won).
+// The real stage name is carried separately in ghl_stage and shown on the row.
 // ---------------------------------------------------------------------------
-const HOT_CAPTURED_STAGES = new Set(["assigned-to call", "attempted contact"]);
 const PIPELINE_LABELS = { hot: "Hot Urgent Leads", onboarding: "Onboarding" };
 
 function derive(pipelineKey, stageName, oppStatus) {
   const stage  = norm(stageName);
   const status = norm(oppStatus);
-  const closedOut = status === "lost" || status === "abandoned";
-  if (pipelineKey === "onboarding") {
-    if (status === "won" || stage === "welcome to vpr") return "recruited";
-    if (closedOut) return null;              // leave status as is
-    return "awaiting";
+  if (!PIPELINE_LABELS[pipelineKey]) return null;        // unknown pipeline → log only
+  if (pipelineKey === "onboarding" && (status === "won" || stage === "welcome to vpr")) {
+    return "recruited";
   }
-  if (pipelineKey === "hot") {
-    if (closedOut) return null;
-    if (HOT_CAPTURED_STAGES.has(stage)) return "captured";
-    return "awaiting";
-  }
-  return null;                               // unknown pipeline → log only
+  if (status === "lost" || status === "abandoned") return null;  // leave status as is
+  return "working";
 }
 
 // ---------------------------------------------------------------------------
@@ -76,7 +71,7 @@ async function findRows(table, idCol, { contactId, phone10, email }) {
   if (phone10)   q.push(`phone_norm.eq.${phone10}`);
   if (email && table === "vpr_leads") q.push(`email.ilike.${encodeURIComponent(email)}`);
   if (!q.length) return [];
-  return sb(`${table}?select=${idCol},lead_status&or=(${q.join(",")})`);
+  return sb(`${table}?select=${idCol},lead_status,status_override&or=(${q.join(",")})`);
 }
 
 // Update one row. lead_status is only written when derived is non-null and the
@@ -84,7 +79,10 @@ async function findRows(table, idCol, { contactId, phone10, email }) {
 async function applyRow(table, idCol, row, { contactId, stageText, derived, at }) {
   const patch = { ghl_stage: stageText, ghl_stage_at: at };
   if (contactId) patch.ghl_contact_id = contactId;
-  if (derived && row.lead_status !== "recruited") patch.lead_status = derived;
+  // Manual override wins; recruited is sticky and never downgrades.
+  if (derived && !row.status_override && row.lead_status !== "recruited") {
+    patch.lead_status = derived;
+  }
   await sb(`${table}?${idCol}=eq.${encodeURIComponent(row[idCol])}`, {
     method: "PATCH", body: patch, prefer: "return=minimal",
   });
