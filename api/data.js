@@ -21,11 +21,11 @@ module.exports = async function handler(req, res) {
   //   id is included as a stable row id for status updates (not PII). No email/phone.
   const callsUrl =
     `${SUPABASE_URL}/rest/v1/vpr_calls` +
-    `?select=call_sid,from_caller_name,from_number,from_city,from_state,status,duration_seconds,started_at,lead_status` +
+    `?select=call_sid,from_caller_name,from_number,from_city,from_state,status,duration_seconds,started_at,lead_status,ghl_stage,ghl_stage_at,ghl_contact_id,status_override` +
     `&order=started_at.desc&limit=1000`;
   const leadsUrl =
     `${SUPABASE_URL}/rest/v1/vpr_leads` +
-    `?select=id,first_name,last_name,source,utm_source,utm_campaign,page_url,created_at,lead_status` +
+    `?select=id,first_name,last_name,source,utm_source,utm_medium,utm_campaign,page_url,created_at,lead_status,ghl_stage,ghl_stage_at,ghl_contact_id,status_override` +
     `&order=created_at.desc&limit=1000`;
   try {
     const [callsRes, leadsRes] = await Promise.all([
