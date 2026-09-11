@@ -212,7 +212,9 @@
   .tbl-row:hover { background: rgba(255,255,255,.025); }
   .tbl-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
   .c-name { font-weight: 600; font-size: 14px; letter-spacing: -.1px; }
-  .c-source { font-size: 13px; color: var(--text); }
+  .c-source { font-size: 13px; color: var(--text); min-width: 0; }
+  .c-source .src-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .c-source .src-campaign { color: var(--faint); font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .c-stage { font-size: 13px; color: var(--text); line-height: 1.35; }
   .c-stage.empty { color: var(--faint); }
   .c-activity .when { font-size: 12.5px; }
@@ -227,7 +229,7 @@
   .pill2.new       { background: rgba(74,108,247,.13);  color: var(--blue-soft); border-color: rgba(74,108,247,.3); }
   .pill2.working   { background: rgba(251,191,36,.13);  color: var(--amber);     border-color: rgba(251,191,36,.3); }
   .pill2.recruited { background: rgba(52,211,153,.13);  color: var(--green);     border-color: rgba(52,211,153,.3); }
-  .override-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; }
+  .override-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 1px rgba(0,0,0,.35); display: inline-block; flex-shrink: 0; }
   .stale-chip {
     font-size: 9.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
     padding: 2px 7px; border-radius: 999px; background: rgba(251,191,36,.14);
@@ -403,6 +405,16 @@
     return STATUSES.includes(s) ? s : "new";
   }
 
+  // Known-brand display labels, applied after normalisation and ".com" stripping,
+  // before falling back to generic title-casing.
+  const SOURCE_LABELS = {
+    chatgpt: "ChatGPT",
+    facebook: "Facebook",
+    instagram: "Instagram",
+    google: "Google",
+    email: "Email",
+  };
+
   // Groups null / "" / whitespace-only utm_source into one "Unattributed" bucket.
   // Case-insensitive grouping key; display label is Title Case with a trailing ".com" stripped.
   function sourceInfo(lead) {
@@ -410,7 +422,8 @@
     if (!raw) return { key: "__unattributed__", label: "Unattributed", unattributed: true };
     const key = raw.toLowerCase();
     const base = key.endsWith(".com") ? key.slice(0, -4) : key;
-    return { key, label: titleCase(base), unattributed: false };
+    const label = SOURCE_LABELS[base] || titleCase(base);
+    return { key, label, unattributed: false };
   }
 
   function lastActivityIso(lead) { return lead.ghl_stage_at || lead.created_at || null; }
@@ -630,7 +643,6 @@
   function renderDrawer(lead) {
     const id = String(lead.id);
     const src = sourceInfo(lead).label;
-    const medium = lead.utm_medium ? escapeHtml(lead.utm_medium) : "—";
     const campaign = lead.utm_campaign ? escapeHtml(lead.utm_campaign) : "—";
     const landing = lead.page_url ? escapeHtml(hostPath(lead.page_url)) : "—";
     const firstSeen = lead.created_at ? escapeHtml(formatTime(lead.created_at)) : "—";
@@ -639,7 +651,6 @@
         <div>
           <h3>Attribution</h3>
           <div class="attr-row"><span class="ak">Source</span><span class="av">${escapeHtml(src)}</span></div>
-          <div class="attr-row"><span class="ak">Medium</span><span class="av">${medium}</span></div>
           <div class="attr-row"><span class="ak">Campaign</span><span class="av">${campaign}</span></div>
           <div class="attr-row"><span class="ak">Landing page</span><span class="av">${landing}</span></div>
           <div class="attr-row"><span class="ak">First seen</span><span class="av">${firstSeen}</span></div>
@@ -659,9 +670,10 @@
     const id = String(lead.id);
     const name = [lead.first_name, lead.last_name].filter(Boolean).join(" ") || "—";
     const src = sourceInfo(lead).label;
+    const sourceHtml = `<div class="c-source"><div class="src-line">${escapeHtml(src)}</div>${lead.utm_campaign ? `<div class="src-campaign">${escapeHtml(lead.utm_campaign)}</div>` : ""}</div>`;
     const stageHtml = lead.ghl_stage
       ? `<div class="c-stage">${escapeHtml(lead.ghl_stage)}</div>`
-      : `<div class="c-stage empty">Not in a pipeline</div>`;
+      : `<div class="c-stage empty">—</div>`;
     const activityIso = lastActivityIso(lead);
     const activityHtml = activityIso
       ? `<div class="c-activity"><div class="when">${escapeHtml(formatTime(activityIso))}</div><div class="rel">${escapeHtml(relativeTime(activityIso))}</div></div>`
@@ -677,7 +689,7 @@
     const row = `
       <div class="tbl-row" data-id="${escapeHtml(id)}" role="row" tabindex="0" aria-expanded="${isOpen}">
         <div class="c-name">${escapeHtml(name)}</div>
-        <div class="c-source">${escapeHtml(src)}</div>
+        ${sourceHtml}
         ${stageHtml}
         ${activityHtml}
         ${statusHtml}
