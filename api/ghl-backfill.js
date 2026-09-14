@@ -94,6 +94,7 @@ module.exports = async function handler(req, res) {
   if (provided !== SECRET) return res.status(401).json({ error: "Unauthorized" });
 
   const dryRun = Boolean(req.query && req.query.dry_run);
+  const inspect = Boolean(req.query && req.query.inspect);
 
   try {
     // Load every lead once; match in memory rather than one query per opportunity.
@@ -112,6 +113,18 @@ module.exports = async function handler(req, res) {
     for (const p of PIPELINES) {
       const stageNames = await fetchStageNames(p.id);
       const opps = await fetchOpportunities(p.id);
+      if (inspect) {
+        const o = opps[0] || {};
+        return res.status(200).json({
+          inspect: true,
+          pipeline: p.label,
+          opportunity_keys: Object.keys(o).sort(),
+          date_like_fields: Object.fromEntries(
+            Object.entries(o).filter(([k]) => /date|time|at$|updated|created|moved|status/i.test(k))
+          ),
+          contact_keys: Object.keys(o.contact || {}).sort(),
+        });
+      }
       for (const o of opps) {
         scanned++;
         const c = o.contact || {};
