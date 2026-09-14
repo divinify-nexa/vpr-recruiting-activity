@@ -187,7 +187,7 @@ module.exports = async function handler(req, res) {
       unmatched_in_ghl: unmatched,
       skipped_overrides: skipped.length,
       status_changes: changes.filter((c) => c.newStatus && c.newStatus !== c.from).length,
-      sample: changes.slice(0, 15).map((c) => ({ name: c.name, from: c.from, to: c.newStatus || "(stage only)", stage: c.stageText })),
+      sample: changes.slice(0, 8).map((c) => ({ name: c.name, from: c.from, to: c.newStatus || "(stage only)", stage: c.stageText, moved_at: c.movedAt })),
     });
   } catch (err) {
     return res.status(500).json({ error: String(err.message || err) });
