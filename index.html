@@ -167,6 +167,27 @@
     position: relative; font-size: 15px; font-weight: 800; flex-shrink: 0;
     font-variant-numeric: tabular-nums; letter-spacing: -.3px; min-width: 22px; text-align: right;
   }
+  .rsrc-main { position: relative; display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+  .rsrc-main .src-name { white-space: normal; }
+  .rsrc-sub { color: var(--faint); font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .rsrc-note { padding: 0 20px 16px; color: var(--faint); font-size: 11.5px; }
+
+  /* Month-over-month strip */
+  .month-strip {
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    padding: 10px 2px; margin-bottom: 4px; font-size: 12.5px;
+  }
+  .month-strip .ms-label {
+    font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+    font-size: 11px; color: var(--faint);
+  }
+  .ms-item { display: inline-flex; align-items: baseline; gap: 6px; color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ms-item .ms-name { color: var(--muted); font-weight: 500; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .ms-delta { font-size: 11px; font-weight: 700; }
+  .ms-delta.up { color: var(--green); }
+  .ms-delta.down { color: var(--red); }
+  .ms-delta.flat { color: var(--faint); }
+  .month-strip-note { color: var(--faint); font-size: 11px; margin: 0 2px 20px; }
 
   /* Filter bar */
   .filterbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -327,6 +348,12 @@
       </div>
     </header>
 
+    <section class="month-strip" id="month-strip">
+      <span class="ms-label" id="month-strip-label">—</span>
+      <span id="month-strip-figs"></span>
+    </section>
+    <div class="month-strip-note">Movement and recruit dates before Sep 11 are reconstructed from GHL's current state, not observed live.</div>
+
     <section class="metrics" id="metrics">
       <button type="button" class="mcard" data-status="new">
         <div class="m-num" id="m-new">—</div>
@@ -343,12 +370,19 @@
         <div class="m-lab">Recruited</div>
         <div class="m-sub">Won in onboarding</div>
         <div class="m-extra" id="m-extra" hidden></div>
+        <div class="m-extra" id="m-time-to-recruit" hidden></div>
       </button>
     </section>
 
     <section class="panel">
       <h2>Leads by source <span class="count" id="src-total">—</span></h2>
       <div class="src-cols" id="src-list"><div class="loading">Loading…</div></div>
+    </section>
+
+    <section class="panel">
+      <h2>Recruits by source <span class="count" id="rsrc-total">—</span></h2>
+      <div class="src-cols" id="rsrc-list"><div class="loading">Loading…</div></div>
+      <div class="rsrc-note">Conversion rates on small samples move a lot. Treat gaps under ~10 leads as noise.</div>
     </section>
 
     <div class="filterbar" id="filterbar">
@@ -500,6 +534,64 @@
     return map;
   }
 
+  // Recruit counts per source, keyed the same as groupBySource. Sources with
+  // zero recruits still get an entry (via the leads map) so they render at 0.
+  function groupRecruitsBySource() {
+    const bySource = groupBySource();
+    const map = new Map();
+    bySource.forEach((data, key) => map.set(key, { label: data.label, leads: data.n, recruits: 0 }));
+    state.leads.forEach((l) => {
+      if (normStatus(l.lead_status) !== "recruited") return;
+      const info = sourceInfo(l);
+      const entry = map.get(info.key);
+      if (entry) entry.recruits++;
+    });
+    return map;
+  }
+
+  function monthBounds(offsetMonths) {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() + offsetMonths, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + offsetMonths + 1, 1);
+    return { start, end };
+  }
+
+  function inRange(iso, start, end) {
+    if (!iso) return false;
+    const d = new Date(iso);
+    if (isNaN(d)) return false;
+    return d >= start && d < end;
+  }
+
+  function monthMetrics(offsetMonths) {
+    const { start, end } = monthBounds(offsetMonths);
+    let leads = 0, recruits = 0, movement = 0;
+    state.leads.forEach((l) => {
+      if (inRange(l.created_at, start, end)) leads++;
+      if (normStatus(l.lead_status) === "recruited" && inRange(l.ghl_stage_at, start, end)) recruits++;
+      if (inRange(l.ghl_stage_at, start, end)) movement++;
+    });
+    return { leads, recruits, movement };
+  }
+
+  // Median days from created_at to ghl_stage_at, recruited leads with both timestamps only.
+  function timeToRecruitStat() {
+    const days = [];
+    state.leads.forEach((l) => {
+      if (normStatus(l.lead_status) !== "recruited") return;
+      if (!l.created_at || !l.ghl_stage_at) return;
+      const c = new Date(l.created_at), s = new Date(l.ghl_stage_at);
+      if (isNaN(c) || isNaN(s)) return;
+      const d = (s.getTime() - c.getTime()) / 86400000;
+      if (d >= 0) days.push(d);
+    });
+    if (!days.length) return null;
+    days.sort((a, b) => a - b);
+    const mid = Math.floor(days.length / 2);
+    const median = days.length % 2 ? days[mid] : (days[mid - 1] + days[mid]) / 2;
+    return { median: Math.round(median), n: days.length };
+  }
+
   function filteredLeads() {
     let list = state.leads;
     if (statusFilter) list = list.filter((l) => normStatus(l.lead_status) === statusFilter);
@@ -567,6 +659,63 @@
     } else {
       extra.hidden = true;
     }
+
+    const ttrEl = $("m-time-to-recruit");
+    const ttr = timeToRecruitStat();
+    if (ttr) {
+      const prefix = ttr.n < 5 ? "Early: " : "";
+      ttrEl.innerHTML = `${escapeHtml(prefix)}Median ${ttr.median} days to recruit <span style="color:var(--faint)">(${ttr.n} recruits)</span>`;
+      ttrEl.hidden = false;
+    } else {
+      ttrEl.hidden = true;
+    }
+  }
+
+  function renderMonthStrip() {
+    const now = new Date();
+    const curName = now.toLocaleDateString("en-US", { month: "long" });
+    const prevD = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevName = prevD.toLocaleDateString("en-US", { month: "long" });
+    $("month-strip-label").textContent = `${curName} vs ${prevName}`.toUpperCase();
+
+    const cur = monthMetrics(0);
+    const prev = monthMetrics(-1);
+    const fig = (label, curV, prevV) => {
+      const diff = curV - prevV;
+      const cls = diff > 0 ? "up" : diff < 0 ? "down" : "flat";
+      const caret = diff > 0 ? "▲" : diff < 0 ? "▼" : "–";
+      return `<span class="ms-item"><span class="ms-name">${label}</span> ${curV} <span class="ms-delta ${cls}">${caret} ${Math.abs(diff)}</span></span>`;
+    };
+    $("month-strip-figs").innerHTML = [
+      fig("Leads", cur.leads, prev.leads),
+      fig("Recruits", cur.recruits, prev.recruits),
+      fig("Movement", cur.movement, prev.movement),
+    ].join(" &nbsp; ");
+  }
+
+  function renderRecruitsBySource() {
+    const el = $("rsrc-list");
+    const leads = state.leads;
+    if (!leads.length) { el.innerHTML = '<div class="src-empty">No leads yet.</div>'; $("rsrc-total").textContent = "0"; return; }
+    const map = groupRecruitsBySource();
+    const rows = [...map.entries()].sort((a, b) => b[1].recruits - a[1].recruits);
+    const totalRecruits = rows.reduce((sum, [, d]) => sum + d.recruits, 0);
+    $("rsrc-total").textContent = totalRecruits;
+    const max = Math.max(1, rows[0][1].recruits);
+    el.innerHTML = rows.map(([key, data]) => {
+      const pct = data.recruits ? Math.max(6, Math.round((data.recruits / max) * 100)) : 0;
+      const rate = data.leads ? ((data.recruits / data.leads) * 100).toFixed(1) : "0.0";
+      const active = sourceFilter === key && statusFilter === "recruited";
+      return `
+        <div class="src-row${active ? " active" : ""}" data-key="${escapeHtml(key)}" role="button" tabindex="0">
+          <span class="src-bar" style="width:${pct}%"></span>
+          <div class="rsrc-main">
+            <span class="src-name">${escapeHtml(data.label)}</span>
+            <span class="rsrc-sub">${data.leads} leads &middot; ${rate}%</span>
+          </div>
+          <span class="src-count">${data.recruits}</span>
+        </div>`;
+    }).join("");
   }
 
   function renderSources() {
@@ -730,8 +879,10 @@
   }
 
   function render() {
+    renderMonthStrip();
     renderMetrics();
     renderSources();
+    renderRecruitsBySource();
     renderChips();
     renderTable();
   }
@@ -745,6 +896,11 @@
 
   function toggleStatusFilter(s) { statusFilter = statusFilter === s ? null : s; render(); }
   function toggleSourceFilter(key) { sourceFilter = sourceFilter === key ? null : key; render(); }
+  function toggleRecruitSourceFilter(key) {
+    if (sourceFilter === key && statusFilter === "recruited") { sourceFilter = null; statusFilter = null; }
+    else { sourceFilter = key; statusFilter = "recruited"; }
+    render();
+  }
   function clearFilter(type) {
     if (type === "status") statusFilter = null;
     if (type === "source") sourceFilter = null;
@@ -826,7 +982,10 @@
     const mcard = e.target.closest(".mcard");
     if (mcard) { toggleStatusFilter(mcard.dataset.status); return; }
 
-    const srow = e.target.closest(".src-row");
+    const rsrow = e.target.closest("#rsrc-list .src-row");
+    if (rsrow) { toggleRecruitSourceFilter(rsrow.dataset.key); return; }
+
+    const srow = e.target.closest("#src-list .src-row");
     if (srow) { toggleSourceFilter(srow.dataset.key); return; }
 
     const clearBtn = e.target.closest("[data-clear]");
@@ -858,7 +1017,9 @@
     if (e.key !== "Enter" && e.key !== " ") return;
     const trow = e.target.closest(".tbl-row");
     if (trow && e.target === trow) { e.preventDefault(); toggleDrawer(trow.dataset.id); return; }
-    const srow = e.target.closest(".src-row");
+    const rsrow = e.target.closest("#rsrc-list .src-row");
+    if (rsrow && e.target === rsrow) { e.preventDefault(); toggleRecruitSourceFilter(rsrow.dataset.key); return; }
+    const srow = e.target.closest("#src-list .src-row");
     if (srow && e.target === srow) { e.preventDefault(); toggleSourceFilter(srow.dataset.key); return; }
   });
 
