@@ -82,9 +82,10 @@
   .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
   .mcard {
     position: relative; overflow: hidden; text-align: left; cursor: pointer;
+    display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
     background: var(--card-grad), var(--panel);
     border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 20px 20px 18px; box-shadow: var(--card-shadow);
+    padding: 14px 20px; box-shadow: var(--card-shadow);
     transition: transform .16s ease, border-color .16s ease;
     font-family: inherit; color: inherit;
   }
@@ -104,17 +105,15 @@
   }
   .mcard .m-lab {
     color: var(--muted); font-size: 11.5px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: .07em; margin-top: 12px;
+    text-transform: uppercase; letter-spacing: .07em; margin-top: 4px;
   }
-  .mcard .m-sub { color: var(--faint); font-size: 12px; margin-top: 3px; }
+  .mcard .m-sub { color: var(--faint); font-size: 12px; margin-top: 2px; }
   .mcard.recruited { border-color: rgba(255,222,23,.3); }
   .mcard.recruited .m-num {
     font-size: 46px;
     background: linear-gradient(180deg, var(--yellow-hi), var(--yellow));
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .mcard .m-extra { color: var(--faint); font-size: 11.5px; margin-top: 9px; }
-
   /* Panels (source card + table card share this shell) */
   .panel {
     background: var(--card-grad), var(--panel);
@@ -127,11 +126,26 @@
     border-bottom: 1px solid var(--line-soft);
     display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
   }
+  .panel > h2[data-toggle] { cursor: pointer; }
   .panel > h2 .count {
     color: var(--text); font-weight: 600; letter-spacing: 0; font-size: 11.5px;
     background: rgba(255,255,255,.07); border: 1px solid var(--line-soft);
     padding: 3px 10px; border-radius: 999px; text-transform: none;
   }
+  .h2-meta { display: flex; align-items: center; gap: 10px; }
+  .chevron {
+    display: inline-flex; color: var(--faint); font-size: 10px;
+    transition: transform .2s ease;
+  }
+  .chevron.collapsed { transform: rotate(-90deg); }
+
+  /* Collapsible section body, grid-template-rows technique */
+  .collapsible {
+    display: grid; grid-template-rows: 1fr;
+    transition: grid-template-rows .22s ease;
+  }
+  .collapsible.collapsed { grid-template-rows: 0fr; }
+  .collapsible-inner { overflow: hidden; min-height: 0; }
 
   /* Leads-by-source card */
   .src-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; padding: 16px 20px 18px; }
@@ -187,6 +201,7 @@
   .ms-delta.up { color: var(--green); }
   .ms-delta.down { color: var(--red); }
   .ms-delta.flat { color: var(--faint); }
+  .ms-not-attr { color: var(--faint); font-size: 11px; }
   .month-strip-note { color: var(--faint); font-size: 11px; margin: 0 2px 20px; }
 
   /* Filter bar */
@@ -311,6 +326,8 @@
     .mcard, .panel { animation: none; }
     .mcard:hover { transform: none; }
     button.refresh, .mcard, .src-row, .th, .ov-opt { transition: none; }
+    .collapsible { transition: none; }
+    .chevron { transition: none; }
   }
 
   @media (max-width: 760px) {
@@ -351,6 +368,7 @@
     <section class="month-strip" id="month-strip">
       <span class="ms-label" id="month-strip-label">—</span>
       <span id="month-strip-figs"></span>
+      <span class="ms-not-attr" id="ms-not-attr" hidden></span>
     </section>
     <div class="month-strip-note">Movement and recruit dates before Sep 11 are reconstructed from GHL's current state, not observed live.</div>
 
@@ -369,20 +387,30 @@
         <div class="m-num" id="m-recruited">—</div>
         <div class="m-lab">Recruited</div>
         <div class="m-sub">Won in onboarding</div>
-        <div class="m-extra" id="m-extra" hidden></div>
-        <div class="m-extra" id="m-time-to-recruit" hidden></div>
       </button>
     </section>
 
     <section class="panel">
-      <h2>Leads by source <span class="count" id="src-total">—</span></h2>
-      <div class="src-cols" id="src-list"><div class="loading">Loading…</div></div>
+      <h2 id="src-h2" data-toggle="src" role="button" tabindex="0" aria-expanded="true">Leads by source
+        <span class="h2-meta"><span class="count" id="src-total">—</span><span class="chevron" id="src-chevron" aria-hidden="true">▾</span></span>
+      </h2>
+      <div class="collapsible" id="src-collapsible">
+        <div class="collapsible-inner">
+          <div class="src-cols" id="src-list"><div class="loading">Loading…</div></div>
+        </div>
+      </div>
     </section>
 
     <section class="panel">
-      <h2>Recruits by source <span class="count" id="rsrc-total">—</span></h2>
-      <div class="src-cols" id="rsrc-list"><div class="loading">Loading…</div></div>
-      <div class="rsrc-note">Conversion rates on small samples move a lot. Treat gaps under ~10 leads as noise.</div>
+      <h2 id="rsrc-h2" data-toggle="rsrc" role="button" tabindex="0" aria-expanded="true">Recruits by source
+        <span class="h2-meta"><span class="count" id="rsrc-total">—</span><span class="chevron" id="rsrc-chevron" aria-hidden="true">▾</span></span>
+      </h2>
+      <div class="collapsible" id="rsrc-collapsible">
+        <div class="collapsible-inner">
+          <div class="src-cols" id="rsrc-list"><div class="loading">Loading…</div></div>
+          <div class="rsrc-note">Conversion rates on small samples move a lot. Treat gaps under ~10 leads as noise.</div>
+        </div>
+      </div>
     </section>
 
     <div class="filterbar" id="filterbar">
@@ -420,6 +448,8 @@
   const historyCache = new Map();       // ghl_contact_id -> { status, events }
   const overrideUI = new Map();         // lead id -> { open, picked, saving, error }
   let unattributedSummary = null;       // { unattributed_recruits, since }
+  let srcOpen = true;                   // "Leads by source" card expanded state, in-memory only
+  let rsrcOpen = true;                  // "Recruits by source" card expanded state, in-memory only
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) => (
@@ -574,24 +604,6 @@
     return { leads, recruits, movement };
   }
 
-  // Median days from created_at to ghl_stage_at, recruited leads with both timestamps only.
-  function timeToRecruitStat() {
-    const days = [];
-    state.leads.forEach((l) => {
-      if (normStatus(l.lead_status) !== "recruited") return;
-      if (!l.created_at || !l.ghl_stage_at) return;
-      const c = new Date(l.created_at), s = new Date(l.ghl_stage_at);
-      if (isNaN(c) || isNaN(s)) return;
-      const d = (s.getTime() - c.getTime()) / 86400000;
-      if (d >= 0) days.push(d);
-    });
-    if (!days.length) return null;
-    days.sort((a, b) => a - b);
-    const mid = Math.floor(days.length / 2);
-    const median = days.length % 2 ? days[mid] : (days[mid - 1] + days[mid]) / 2;
-    return { median: Math.round(median), n: days.length };
-  }
-
   function filteredLeads() {
     let list = state.leads;
     if (statusFilter) list = list.filter((l) => normStatus(l.lead_status) === statusFilter);
@@ -651,24 +663,6 @@
     document.querySelectorAll(".mcard").forEach((c) =>
       c.classList.toggle("active", c.dataset.status === statusFilter)
     );
-    const extra = $("m-extra");
-    if (unattributedSummary && unattributedSummary.unattributed_recruits > 0) {
-      const since = unattributedSummary.since ? formatSinceDate(unattributedSummary.since) : "";
-      extra.textContent = `+${unattributedSummary.unattributed_recruits} other recruits not marketing-attributed${since ? ` (since ${since})` : ""}`;
-      extra.hidden = false;
-    } else {
-      extra.hidden = true;
-    }
-
-    const ttrEl = $("m-time-to-recruit");
-    const ttr = timeToRecruitStat();
-    if (ttr) {
-      const prefix = ttr.n < 5 ? "Early: " : "";
-      ttrEl.innerHTML = `${escapeHtml(prefix)}Median ${ttr.median} days to recruit <span style="color:var(--faint)">(${ttr.n} recruits)</span>`;
-      ttrEl.hidden = false;
-    } else {
-      ttrEl.hidden = true;
-    }
   }
 
   function renderMonthStrip() {
@@ -691,6 +685,15 @@
       fig("Recruits", cur.recruits, prev.recruits),
       fig("Movement", cur.movement, prev.movement),
     ].join(" &nbsp; ");
+
+    const naEl = $("ms-not-attr");
+    if (unattributedSummary && unattributedSummary.unattributed_recruits > 0) {
+      const since = unattributedSummary.since ? formatSinceDate(unattributedSummary.since) : "";
+      naEl.textContent = `+${unattributedSummary.unattributed_recruits} other recruits not marketing-attributed${since ? ` (since ${since})` : ""}`;
+      naEl.hidden = false;
+    } else {
+      naEl.hidden = true;
+    }
   }
 
   function renderRecruitsBySource() {
@@ -908,6 +911,20 @@
   }
   function clearAllFilters() { statusFilter = null; sourceFilter = null; render(); }
 
+  function applyCollapseState() {
+    $("src-collapsible").classList.toggle("collapsed", !srcOpen);
+    $("src-chevron").classList.toggle("collapsed", !srcOpen);
+    $("src-h2").setAttribute("aria-expanded", String(srcOpen));
+    $("rsrc-collapsible").classList.toggle("collapsed", !rsrcOpen);
+    $("rsrc-chevron").classList.toggle("collapsed", !rsrcOpen);
+    $("rsrc-h2").setAttribute("aria-expanded", String(rsrcOpen));
+  }
+  function toggleCollapse(key) {
+    if (key === "src") srcOpen = !srcOpen;
+    if (key === "rsrc") rsrcOpen = !rsrcOpen;
+    applyCollapseState();
+  }
+
   function toggleSort(key) {
     if (sortKey === key) { sortDir = sortDir === "asc" ? "desc" : "asc"; }
     else { sortKey = key; sortDir = key === "activity" ? "desc" : "asc"; }
@@ -979,6 +996,9 @@
   // --- Event wiring (delegated; containers persist across refreshes) ---
 
   document.addEventListener("click", (e) => {
+    const collapseToggle = e.target.closest("[data-toggle]");
+    if (collapseToggle) { toggleCollapse(collapseToggle.dataset.toggle); return; }
+
     const mcard = e.target.closest(".mcard");
     if (mcard) { toggleStatusFilter(mcard.dataset.status); return; }
 
@@ -1015,6 +1035,8 @@
 
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
+    const collapseToggle = e.target.closest("[data-toggle]");
+    if (collapseToggle && e.target === collapseToggle) { e.preventDefault(); toggleCollapse(collapseToggle.dataset.toggle); return; }
     const trow = e.target.closest(".tbl-row");
     if (trow && e.target === trow) { e.preventDefault(); toggleDrawer(trow.dataset.id); return; }
     const rsrow = e.target.closest("#rsrc-list .src-row");
@@ -1048,6 +1070,7 @@
   }
 
   $("refresh").addEventListener("click", load);
+  applyCollapseState();
   load();
   setInterval(load, 60000); // auto-refresh every minute
 </script>
