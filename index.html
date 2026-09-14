@@ -201,6 +201,15 @@
   .ms-delta.up { color: var(--green); }
   .ms-delta.down { color: var(--red); }
   .ms-delta.flat { color: var(--faint); }
+  .ms-item[data-toggle-stalled] {
+    cursor: pointer; border-radius: 6px; padding: 2px 7px; margin: -2px -7px;
+    transition: background .15s ease;
+  }
+  .ms-item[data-toggle-stalled]:hover { background: rgba(255,255,255,.05); }
+  .ms-item[data-toggle-stalled].active { background: rgba(251,191,36,.14); }
+  .ms-stalled-num { font-weight: 700; }
+  .ms-stalled-num.amber { color: var(--amber); }
+  .ms-stalled-num.zero { color: var(--faint); }
   .ms-not-attr { color: var(--faint); font-size: 11px; }
   .month-strip-note { color: var(--faint); font-size: 11px; margin: 0 2px 20px; }
 
@@ -255,6 +264,7 @@
   .c-stage.empty { color: var(--faint); }
   .c-activity .when { font-size: 12.5px; }
   .c-activity .rel { font-size: 11px; color: var(--faint); margin-top: 2px; }
+  .c-activity .rel-stalled { color: var(--amber); font-weight: 600; }
   .c-status { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
   .pill2 {
@@ -441,6 +451,7 @@
   const state = { leads: [] };          // latest data from /api/data
   let statusFilter = null;              // null | "new" | "working" | "recruited"
   let sourceFilter = null;              // null | normalized utm_source key
+  let stalledFilter = false;            // true = show only stalled leads
   let searchText = "";
   let sortKey = "activity";
   let sortDir = "desc";
@@ -539,6 +550,22 @@
     return (Date.now() - d.getTime()) / 86400000 >= 14;
   }
 
+  // Stalled: working leads with no GHL stage movement in 14+ days, strictly by
+  // ghl_stage_at (unlike isStale, no fallback to created_at).
+  function isStalled(lead) {
+    if (normStatus(lead.lead_status) !== "working") return false;
+    if (!lead.ghl_stage_at) return false;
+    const d = new Date(lead.ghl_stage_at);
+    if (isNaN(d)) return false;
+    return (Date.now() - d.getTime()) / 86400000 >= 14;
+  }
+
+  function stalledDays(lead) {
+    return Math.round((Date.now() - new Date(lead.ghl_stage_at).getTime()) / 86400000);
+  }
+
+  function stalledCount() { return state.leads.filter(isStalled).length; }
+
   function hostPath(url) {
     if (!url) return "—";
     try {
@@ -608,6 +635,7 @@
     let list = state.leads;
     if (statusFilter) list = list.filter((l) => normStatus(l.lead_status) === statusFilter);
     if (sourceFilter) list = list.filter((l) => sourceInfo(l).key === sourceFilter);
+    if (stalledFilter) list = list.filter(isStalled);
     if (searchText.trim()) {
       const q = searchText.trim().toLowerCase();
       list = list.filter((l) => {
@@ -680,10 +708,14 @@
       const caret = diff > 0 ? "▲" : diff < 0 ? "▼" : "–";
       return `<span class="ms-item"><span class="ms-name">${label}</span> ${curV} <span class="ms-delta ${cls}">${caret} ${Math.abs(diff)}</span></span>`;
     };
+    const stalledN = stalledCount();
+    const stalledFig = `<span class="ms-item ms-stalled${stalledFilter ? " active" : ""}" data-toggle-stalled role="button" tabindex="0" title="Working leads with no GHL stage movement in 14+ days"><span class="ms-name">Stalled</span> <span class="ms-stalled-num ${stalledN > 0 ? "amber" : "zero"}">${stalledN}</span></span>`;
+
     $("month-strip-figs").innerHTML = [
       fig("Leads", cur.leads, prev.leads),
       fig("Recruits", cur.recruits, prev.recruits),
       fig("Movement", cur.movement, prev.movement),
+      stalledFig,
     ].join(" &nbsp; ");
 
     const naEl = $("ms-not-attr");
@@ -755,6 +787,7 @@
       const label = map.has(sourceFilter) ? map.get(sourceFilter).label : sourceFilter;
       chips.push({ type: "source", label });
     }
+    if (stalledFilter) chips.push({ type: "stalled", label: "Stalled" });
     return chips;
   }
 
@@ -838,8 +871,10 @@
       ? `<div class="c-stage">${escapeHtml(lead.ghl_stage)}</div>`
       : `<div class="c-stage empty">—</div>`;
     const activityIso = lastActivityIso(lead);
+    const stalled = isStalled(lead);
+    const relText = stalled ? `${stalledDays(lead)}d stalled` : relativeTime(activityIso);
     const activityHtml = activityIso
-      ? `<div class="c-activity"><div class="when">${escapeHtml(formatTime(activityIso))}</div><div class="rel">${escapeHtml(relativeTime(activityIso))}</div></div>`
+      ? `<div class="c-activity"><div class="when">${escapeHtml(formatTime(activityIso))}</div><div class="rel${stalled ? " rel-stalled" : ""}">${escapeHtml(relText)}</div></div>`
       : `<div class="c-activity"><div class="when">—</div></div>`;
     const status = normStatus(lead.lead_status);
     const overrideDot = lead.status_override
@@ -907,9 +942,20 @@
   function clearFilter(type) {
     if (type === "status") statusFilter = null;
     if (type === "source") sourceFilter = null;
+    if (type === "stalled") { stalledFilter = false; sortKey = "activity"; sortDir = "desc"; }
     render();
   }
-  function clearAllFilters() { statusFilter = null; sourceFilter = null; render(); }
+  function clearAllFilters() {
+    statusFilter = null; sourceFilter = null;
+    if (stalledFilter) { stalledFilter = false; sortKey = "activity"; sortDir = "desc"; }
+    render();
+  }
+  function toggleStalledFilter() {
+    stalledFilter = !stalledFilter;
+    sortKey = "activity";
+    sortDir = stalledFilter ? "asc" : "desc";
+    render();
+  }
 
   function applyCollapseState() {
     $("src-collapsible").classList.toggle("collapsed", !srcOpen);
@@ -999,6 +1045,9 @@
     const collapseToggle = e.target.closest("[data-toggle]");
     if (collapseToggle) { toggleCollapse(collapseToggle.dataset.toggle); return; }
 
+    const stalledToggle = e.target.closest("[data-toggle-stalled]");
+    if (stalledToggle) { toggleStalledFilter(); return; }
+
     const mcard = e.target.closest(".mcard");
     if (mcard) { toggleStatusFilter(mcard.dataset.status); return; }
 
@@ -1037,6 +1086,8 @@
     if (e.key !== "Enter" && e.key !== " ") return;
     const collapseToggle = e.target.closest("[data-toggle]");
     if (collapseToggle && e.target === collapseToggle) { e.preventDefault(); toggleCollapse(collapseToggle.dataset.toggle); return; }
+    const stalledToggle = e.target.closest("[data-toggle-stalled]");
+    if (stalledToggle && e.target === stalledToggle) { e.preventDefault(); toggleStalledFilter(); return; }
     const trow = e.target.closest(".tbl-row");
     if (trow && e.target === trow) { e.preventDefault(); toggleDrawer(trow.dataset.id); return; }
     const rsrow = e.target.closest("#rsrc-list .src-row");
