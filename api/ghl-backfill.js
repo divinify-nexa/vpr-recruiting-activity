@@ -144,18 +144,20 @@ module.exports = async function handler(req, res) {
         const derived = derive(p.key, stageName, status);
         const statusTag = norm(status) && norm(status) !== "open" ? ` (${status})` : "";
         const stageText = `${p.label} / ${stageName}${statusTag}`;
+        // GHL's authoritative stage-change timestamp. Falls back only if absent.
+        const movedAt = o.lastStageChangeAt || o.lastStatusChangeAt || null;
 
         if (lead.status_override) {
           skipped.push({ name: `${lead.first_name || ""} ${lead.last_name || ""}`.trim(), reason: "override" });
           // still record the stage text so the row shows where they are
-          changes.push({ id: lead.id, stageText, newStatus: null,
+          changes.push({ id: lead.id, stageText, newStatus: null, movedAt,
                          name: `${lead.first_name || ""} ${lead.last_name || ""}`.trim(),
                          from: lead.lead_status });
           continue;
         }
 
         const newStatus = (derived && lead.lead_status !== "recruited") ? derived : null;
-        changes.push({ id: lead.id, stageText, newStatus, contactId,
+        changes.push({ id: lead.id, stageText, newStatus, contactId, movedAt,
                        name: `${lead.first_name || ""} ${lead.last_name || ""}`.trim(),
                        from: lead.lead_status });
       }
@@ -163,7 +165,13 @@ module.exports = async function handler(req, res) {
 
     if (!dryRun) {
       for (const ch of changes) {
-        const patch = { ghl_stage: ch.stageText, ghl_stage_at: now };
+        // stage_source records how we learned this: 'backfill' = read from GHL's
+        // current state, 'live' = observed via webhook at the moment it happened.
+        const patch = {
+          ghl_stage: ch.stageText,
+          ghl_stage_at: ch.movedAt || now,
+          stage_source: ch.movedAt ? "backfill" : "backfill-approx",
+        };
         if (ch.contactId) patch.ghl_contact_id = ch.contactId;
         if (ch.newStatus) patch.lead_status = ch.newStatus;
         await sb(`vpr_leads?id=eq.${encodeURIComponent(ch.id)}`, {

@@ -77,7 +77,7 @@ async function findRows(table, idCol, { contactId, phone10, email }) {
 // Update one row. lead_status is only written when derived is non-null and the
 // row is not already recruited (recruited is sticky).
 async function applyRow(table, idCol, row, { contactId, stageText, derived, at }) {
-  const patch = { ghl_stage: stageText, ghl_stage_at: at };
+  const patch = { ghl_stage: stageText, ghl_stage_at: at, stage_source: "live" };
   if (contactId) patch.ghl_contact_id = contactId;
   // Manual override wins; recruited is sticky and never downgrades.
   if (derived && !row.status_override && row.lead_status !== "recruited") {
